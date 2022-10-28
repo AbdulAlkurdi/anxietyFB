@@ -1,3 +1,11 @@
+import pandas as pd
+import scipy.signal as scisig
+import scipy.stats
+import numpy as np
+
+# Frequency dictionary for WESAD data
+fs_dict = {'ACC': 32, 'BVP': 64, 'EDA': 4, 'TEMP': 4, 'label': 700, 'Resp': 700, 'ECG': 700, 'chest': 700}
+
 def get_net_accel(data):
     """
     Function: Computes net acceleration (used for wrist data)
@@ -25,11 +33,16 @@ def get_net_accel_C(data):
 # https://github.com/MITMediaLabAffectiveComputing/eda-explorer/blob/master/load_files.py
 def butter_lowpass(cutoff, fs, order=5):
     """
-    Function: Computes net acceleration
+    Function: Low-pass filter used to smooth signals
 
     :param:
+        cutoff
+        fs
+        order
 
     :return
+        b
+        a
     """
     # Filtering Helper functions
     nyq = 0.5 * fs
