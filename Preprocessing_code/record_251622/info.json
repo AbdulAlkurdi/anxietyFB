@@ -1,0 +1,26 @@
+{
+    "start": 425635479370,
+    "timestamp": 1662638591.2890625,
+    "start_date": "2022-09-08T12:03:11.289062",
+    "decoder_version": "0.9.1",
+    "request": "/api/data/?record=251622",
+    "user": 21504,
+    "algo": {
+        "resource_uri": "/api/algo/133/",
+        "id": 133,
+        "algorithms": {
+            "ecg": "2.1.1",
+            "hrv": "2.1.0",
+            "respiration": "2.2.0",
+            "sleep_phase": "2.1.0",
+            "acceleration": "2.1.0",
+            "sleep_position": "2.1.0",
+            "activity_detection": "2.1.0"
+        },
+        "created": "2020-11-23T22:09:30.415432",
+        "record_id": 251622
+    },
+    "devices": [
+        "HXSKIN1200008550"
+    ]
+}
