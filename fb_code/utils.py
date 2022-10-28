@@ -1,4 +1,4 @@
-import pandas as pd
+import dask as pd
 import scipy.signal as scisig
 import scipy.stats
 import numpy as np
