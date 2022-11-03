@@ -286,7 +286,7 @@ def make_patient_data(subject_id):
 def combine_files(subjects):
     df_list = []
     for s in subjects:
-        df = pd.read_csv(f'{savePath}{subject_feature_path}/S{s}_feats.csv', index_col=0)
+        df = pd_old.read_csv(f'{savePath}{subject_feature_path}/S{s}_feats.csv', index_col=0)
         df['subject'] = s
         df_list.append(df)
 

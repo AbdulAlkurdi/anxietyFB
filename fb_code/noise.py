@@ -17,7 +17,6 @@ def calculate_param(signal, noise_type, signal_to_noise_ratio):
         signal_to_noise_ratio (float): Desired signal to noise ratio
     
     :return
-    (for now, just)
         sigma (float): sigma of the gaussian
     """
     

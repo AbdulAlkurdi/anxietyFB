@@ -95,14 +95,14 @@ class rparser:
     def merge_with_feature_data(self):
         # Confirm feature files are available
         if os.path.isfile('data/may14_feats4.csv'):
-            feat_df = pd.read_csv('data/may14_feats4.csv', index_col=0)
+            feat_df = pd_old.read_csv('data/may14_feats4.csv', index_col=0)
             print(feat_df.info())
         else:
             print('No feature data available. Exiting...')
             return
            
         # Combine data and save
-        df = pd.read_csv(f'{self.DATA_PATH}readmes.csv', index_col=0)
+        df = pd_old.read_csv(f'{self.DATA_PATH}readmes.csv', index_col=0)
 
         dummy_df = pd_old.get_dummies(df)
         
@@ -112,7 +112,7 @@ class rparser:
                            'coffee_today_YES', 'sport_today_YES', 'smoker_NO', 'smoker_YES',
                            'feel_ill_today_YES', 'subject']]
 
-        merged_df = pd.merge(feat_df, dummy_df, on='subject')
+        merged_df = pd_old.merge(feat_df, dummy_df, on='subject')
 
         merged_df.to_csv('data/no_noise.csv')
         
