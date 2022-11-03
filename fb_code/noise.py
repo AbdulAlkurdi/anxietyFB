@@ -1,8 +1,10 @@
 import numpy as np
 import os
 import pickle
+import dask as pd
+import pandas as pd_old
 
-rootdir = '/Users/samuelschapiro/Desktop/Research/HCDL/data/WESAD'
+rootdir = '/Users/samuelschapiro/Desktop/Research/HCDL/fb_code/data/WESAD'
 
 def calculate_param(signal, noise_type, signal_to_noise_ratio):
     """

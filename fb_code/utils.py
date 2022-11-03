@@ -3,8 +3,10 @@ import scipy.signal as scisig
 import scipy.stats
 import numpy as np
 
+# TODO: Make this a parameter in the future
 # Frequency dictionary for WESAD data
 fs_dict = {'ACC': 32, 'BVP': 64, 'EDA': 4, 'TEMP': 4, 'label': 700, 'Resp': 700, 'ECG': 700, 'chest': 700}
+
 
 def get_net_accel(data):
     """

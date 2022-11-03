@@ -182,7 +182,7 @@ def get_samples(data, n_windows, label):
         wstats = utils.get_window_stats(data=w, label=label)
         
         # Calculate stats for window (ECG)
-        wstats_ecg = utils.get_window_stats_ecg(data=w, label=label)
+        wstats_ecg = ecg.get_window_stats_ecg(data=w, label=label)
         
         # Seperating sample and label
         x = pd_old.DataFrame(wstats).drop('label', axis=0)
@@ -237,7 +237,7 @@ def get_samples(data, n_windows, label):
         # RESP(c)
         
         if len(w['Resp_C'].dropna()) > 0:
-            wdf['Resp_C_rate'], wdf['Resp_C_Inhal_mean'], wdf['Resp_C_Inhal_std'], wdf['Resp_C_Exhal_mean'], wdf['Resp_C_Exhal_std'], wdf['Resp_C_I/E'] = get_resp_features(w['Resp_C'].dropna())
+            wdf['Resp_C_rate'], wdf['Resp_C_Inhal_mean'], wdf['Resp_C_Inhal_std'], wdf['Resp_C_Exhal_mean'], wdf['Resp_C_Exhal_std'], wdf['Resp_C_I/E'] = respiration.get_resp_features(w['Resp_C'].dropna())
 
         # TEMP(w and c)
         wdf['TEMP_drange'] = utils.get_dynamic_range(w['TEMP'].dropna())
