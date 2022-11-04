@@ -8,28 +8,41 @@ import numpy as np
 import neurokit2 as nk
 import pickle
 
-# Window size
+
 WINDOW_IN_SECONDS = 30
-# Labels
 label_dict = {'baseline': 1, 'stress': 2, 'amusement': 0}
-# Int to label mappings
 int_to_label = {1: 'baseline', 2: 'stress', 0: 'amusement'}
-# Feature names
 feat_names = None
-# Where to save the data
 savePath = 'data'
-# Where to get the data
 subject_feature_path = '/subject_feats'
 
+# Make file paths if they don't exist
 if not os.path.exists(savePath):
     os.makedirs(savePath)
 if not os.path.exists(savePath + subject_feature_path):
     os.makedirs(savePath + subject_feature_path)
 
-# Class to store the data for each subject
 class SubjectData:
+    """
+    Class: SubjectData
+    /*
+    This class is used to
+    */
+    """
 
     def __init__(self, main_path, subject_number):
+        '''initializes data for a given subject
+    
+        Parameters
+        ----------
+        main_path : string
+            path under which all subject folders reside
+
+        subject_number : int
+            number of the subject we are initializing
+
+        '''
+
         self.name = f'S{subject_number}'
         self.subject_keys = ['signal', 'label', 'subject']
         self.signal_keys = ['chest', 'wrist']
@@ -39,7 +52,23 @@ class SubjectData:
             self.data = pickle.load(file, encoding='latin1')
         self.labels = self.data['label']
 
-    def get_wrist_data(self):
+    def get_wrist_and_chest_data(self):
+        '''extracts wrist data from data dictionary
+
+        Function that extracts wrist data from the data dictionary, which
+        contains the physiological signals that have been extracted from the
+        .pkl subject file.
+        
+        Parameters
+        ----------
+
+        Returns
+        -------
+        data : dict
+            wrist data
+
+        '''
+
         data = self.data['signal']['wrist']
         data.update({'ACC_C': self.data['signal']['chest']['ACC'],
                      'ECG_C': self.data['signal']['chest']['ECG'],
@@ -49,19 +78,8 @@ class SubjectData:
                      'Temp_C': self.data['signal']['chest']['Temp']})
         return data
 
-    def get_chest_data(self):
-        return self.data['signal']['chest']
-    
-    def extract_features(self):  # only wrist
-        results = \
-            {
-                key: get_statistics(self.get_wrist_data()[key].flatten(), self.labels, key)
-                for key in self.wrist_keys
-            }
-        return results
-
 # Computes features for wrist
-def compute_features(e4_data_dict, ch_data_dict, labels, norm_type=None):
+def compute_features(e4_data_dict, labels, norm_type=None):
     # Dataframes for each sensor type
     eda_df = pd_old.DataFrame(e4_data_dict['EDA'], columns=['EDA'])
     bvp_df = pd_old.DataFrame(e4_data_dict['BVP'], columns=['BVP'])
@@ -79,8 +97,6 @@ def compute_features(e4_data_dict, ch_data_dict, labels, norm_type=None):
     # Filter EDA
     eda_df['EDA'] = utils.butter_lowpass_filter(eda_df['EDA'], 1.0, utils.fs_dict['EDA'], 6)
     eda_c_df['EDA_C'] = utils.butter_lowpass_filter(eda_c_df['EDA_C'], 1.0, utils.fs_dict['chest'], 6)
-
-    
     eda_data = nk.eda_phasic(nk.standardize(eda_df['EDA']), sampling_rate=utils.fs_dict['EDA'])
     eda_df['EDA_SCR'] = eda_data['EDA_Phasic']
     eda_df['EDA_SCL'] = eda_data['EDA_Tonic']
@@ -123,9 +139,9 @@ def compute_features(e4_data_dict, ch_data_dict, labels, norm_type=None):
     temp_c_df.index = pd_old.to_datetime(temp_c_df.index, unit='s')
 
     # Getting ECG features
-    ecg_df = ecg.compute_features_chest(ch_data_dict, labels, norm_type=None)
+    ecg_df = ecg.get_ecg_data(e4_data_dict, norm_type=None)
         
-    # Combined dataframe - not used yet
+    # Combined dataframe
     df = eda_df.join(bvp_df, how='outer')
     df = df.join(temp_df, how='outer')
     df = df.join(acc_df, how='outer')
@@ -168,12 +184,11 @@ def get_samples(data, n_windows, label):
         w = data[window_len * i: window_len * (i + 1)]
 
         # Add/Calc rms acc
-        w = pd_old.concat([utils.get_net_accel(w), w])
+        w = pd_old.concat([utils.get_net_accel(w, 'wrist'), w])
         cols = list(w.columns)
         cols[0] = 'net_acc'
         w.columns = cols
-        
-        w = pd_old.concat([utils.get_net_accel_C(w), w])
+        w = pd_old.concat([utils.get_net_accel(w, 'chest'), w])
         cols = list(w.columns)
         cols[0] = 'net_acc_C'
         w.columns = cols
@@ -196,16 +211,15 @@ def get_samples(data, n_windows, label):
                 for col in x.columns:
                     feat_names.append('_'.join([str(row), str(col)]))
 
-        # sample df
+        # Populate sample df
         wdf = pd_old.DataFrame(x.values.flatten()).T
         wdf.columns = feat_names
         wdf = pd_old.concat([wdf, pd_old.DataFrame({'label': y}, index=[0])], axis=1)
         
-        # More feats
+        # Add BVP feature
         wdf['BVP_peak_freq'] = utils.get_peak_freq(w['BVP'].dropna())
         
-        # Add more features here
-        # ACC (w and c)
+        # Add more features here: ACC (w and c)
         wdf['net_acc_abs_integral'] = utils.get_absolute_integral(w['net_acc'].dropna())
         wdf['ACC_x_abs_integral'] = utils.get_absolute_integral(w['ACC_x'].dropna())
         wdf['ACC_y_abs_integral'] = utils.get_absolute_integral(w['ACC_y'].dropna())
@@ -234,8 +248,8 @@ def get_samples(data, n_windows, label):
         # EMG(c)
         wdf['EMG_drange'] = utils.get_dynamic_range(w['EMG_C'].dropna())
         wdf['EMG_abs_integral'] = utils.get_absolute_integral(w['EMG_C'].dropna())
+
         # RESP(c)
-        
         if len(w['Resp_C'].dropna()) > 0:
             wdf['Resp_C_rate'], wdf['Resp_C_Inhal_mean'], wdf['Resp_C_Inhal_std'], wdf['Resp_C_Exhal_mean'], wdf['Resp_C_Exhal_std'], wdf['Resp_C_I/E'] = respiration.get_resp_features(w['Resp_C'].dropna())
 
@@ -257,21 +271,20 @@ def make_patient_data(subject_id):
     subject = SubjectData(main_path='data/WESAD', subject_number=subject_id)
 
     # Empatica E4 data - now with resp
-    e4_data_dict = subject.get_wrist_data()
-
-    # Chest data
-    ch_data_dict = subject.get_chest_data()
+    e4_data_dict = subject.get_wrist_and_chest_data()
     
     # norm type
     norm_type = None
 
     # The 3 classes we are classifying
-    grouped, baseline, stress, amusement = compute_features(e4_data_dict, ch_data_dict, subject.labels, norm_type)
+    grouped, baseline, stress, amusement = compute_features(e4_data_dict, subject.labels, norm_type)
 
+    # Get windows
     n_baseline_wdws = int(len(baseline) / (utils.fs_dict['label'] * WINDOW_IN_SECONDS))
     n_stress_wdws = int(len(stress) / (utils.fs_dict['label'] * WINDOW_IN_SECONDS))
     n_amusement_wdws = int(len(amusement) / (utils.fs_dict['label'] * WINDOW_IN_SECONDS))
     
+    # Get samples
     baseline_samples = get_samples(baseline, n_baseline_wdws, 1)
     stress_samples = get_samples(stress, n_stress_wdws, 2)
     amusement_samples = get_samples(amusement, n_amusement_wdws, 0)

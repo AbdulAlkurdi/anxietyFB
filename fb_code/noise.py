@@ -19,8 +19,8 @@ def calculate_param(signal, noise_type, signal_to_noise_ratio):
     :return
         sigma (float): sigma of the gaussian
     """
-    
-    return (signal**2).mean()/signal_to_noise_ratio
+    if noise_type == 'Gaussian': return (signal**2).mean()/signal_to_noise_ratio
+    else: return -1
 
 def gaussian_homoskedastic(signal_name, signal, signal_to_noise_ratio=None):
     """

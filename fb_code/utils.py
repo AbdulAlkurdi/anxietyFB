@@ -4,33 +4,27 @@ import scipy.stats
 import numpy as np
 
 # TODO: Make this a parameter in the future
-# Frequency dictionary for WESAD data
-fs_dict = {'ACC': 32, 'BVP': 64, 'EDA': 4, 'TEMP': 4, 'label': 700, 'Resp': 700, 'ECG': 700, 'chest': 700}
+fs_dict = {'ACC': 32, 'BVP': 64, 'EDA': 4, 'TEMP': 4, 'label': 700, 'Resp': 700, 'ECG': 700, 'chest': 700} # Frequency dictionary for WESAD data
 
 
-def get_net_accel(data):
-    """
-    Function: Computes net acceleration (used for wrist data)
+def get_net_accel(data, part):
+    '''get net acceleration
 
-    :param:
-        data (DataFrame): data with physiological signals
+    Function that computes net acceleration for wrist data.
 
-    :return
-        net_acceleration (float): Net acceleration
-    """
-    return (data['ACC_x'] ** 2 + data['ACC_y'] ** 2 + data['ACC_z'] ** 2).apply(lambda x: np.sqrt(x))
+    Parameters
+    ----------
+    data : pandas dataframe
+        data with physiological signals
 
-def get_net_accel_C(data):
-    """
-    Function: Computes net acceleration (used for chest data)
+    Returns
+    -------
+    out : float
+        net acceleration
 
-    :param:
-        data (DataFrame): data with physiological signals
-
-    :return
-        net_acceleration (float): Net acceleration
-    """
-    return (data['ACC_x'] ** 2 + data['ACC_y'] ** 2 + data['ACC_z'] ** 2).apply(lambda x: np.sqrt(x))
+    '''
+    return (data['ACC_x'] ** 2 + data['ACC_y'] ** 2 + data['ACC_z'] ** 2).apply(lambda x: np.sqrt(x)) if part == 'wrist' else \
+        (data['ACC_x_C'] ** 2 + data['ACC_y_C'] ** 2 + data['ACC_z_C'] ** 2).apply(lambda x: np.sqrt(x))
 
 # https://github.com/MITMediaLabAffectiveComputing/eda-explorer/blob/master/load_files.py
 def butter_lowpass(cutoff, fs, order=5):
@@ -66,13 +60,21 @@ def butter_lowpass_filter(data, cutoff, fs, order=5):
     return y
 
 def get_slope(series):
-    """
-    Function: Computes net acceleration
+    '''get slope
 
-    :param:
+    Function that computes the slope of a 1-d dataset
 
-    :return
-    """
+    Parameters
+    ----------
+    series : pandas series
+        the series upon which we wish to compute the slope
+
+    Returns
+    -------
+    slope : float
+        slope of the 1d dataset
+
+    '''
     linreg = scipy.stats.linregress(np.arange(len(series)), series )
     slope = linreg[0]
     return slope
@@ -95,43 +97,68 @@ def get_window_stats(data, label=-1):
     return features
 
 def get_absolute_integral(x):
-    """
-    Function: Computes net acceleration
+    '''get absolute integral
 
-    :param:
+    Function that computes the absolute integral of a dataset.
 
-    :return
-    """
+    Parameters
+    ----------
+    x : pandas series or pandas dataframe
+        the series/dataframe upon which we wish to compute the slope
+
+    Returns
+    -------
+    out : float
+        absolute integral of the dataset
+
+    '''
     return np.sum(np.abs(x))
 
 def get_dynamic_range(x):
-    """
-    Function: Computes net acceleration
+    '''get dynamic range
 
-    :param:
+    Function that computes the dynamic range of a dataset.
 
-    :return
-    """
+    Parameters
+    ----------
+    x : pandas series or pandas dataframe
+        the series/dataframe upon which we wish to compute the dynamic range
+
+    Returns
+    -------
+    out : float
+        dynamic range of the dataset
+
+    '''
     return np.max(x) / np.min(x)
 
 def get_peak_freq(x):
-    """
-    Function: Computes net acceleration
+    '''get peak frequency
 
-    :param:
+    Function that computes the peak frequency of a dataset.
 
-    :return
-    """
+    Note: uses a periodogram (https://en.wikipedia.org/wiki/Periodogram)
+
+    Parameters
+    ----------
+    x : pandas series or pandas dataframe
+        the series/dataframe upon which we wish to compute the peak frequency
+
+    Returns
+    -------
+    peak_freq : float
+        peak frequency of the dataset
+
+    '''
     f, Pxx = scisig.periodogram(x, fs=8)
     psd_dict = {amp: freq for amp, freq in zip(Pxx, f)}
     peak_freq = psd_dict[max(psd_dict.keys())]
     return peak_freq
 
-# https://github.com/MITMediaLabAffectiveComputing/eda-explorer/blob/master/AccelerometerFeatureExtractionScript.py
 def filterSignalFIR(eda, cutoff=0.4, numtaps=64):
     """
     Function: Computes net acceleration
-
+    https://github.com/MITMediaLabAffectiveComputing/eda-explorer/blob/master/AccelerometerFeatureExtractionScript.py
     :param:
 
     :return
