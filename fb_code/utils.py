@@ -21,43 +21,58 @@ def get_net_accel(data, part):
     -------
     out : float
         net acceleration
-
     '''
-    return (data['ACC_x'] ** 2 + data['ACC_y'] ** 2 + data['ACC_z'] ** 2).apply(lambda x: np.sqrt(x)) if part == 'wrist' else \
-        (data['ACC_x_C'] ** 2 + data['ACC_y_C'] ** 2 + data['ACC_z_C'] ** 2).apply(lambda x: np.sqrt(x))
+    return (data['ACC_x'] ** 2 + data['ACC_y'] ** 2 + data['ACC_z'] ** 2).apply(lambda x: np.sqrt(x)) if part == 'wrist' \
+            else (data['ACC_x_C'] ** 2 + data['ACC_y_C'] ** 2 + data['ACC_z_C'] ** 2).apply(lambda x: np.sqrt(x))
 
-# https://github.com/MITMediaLabAffectiveComputing/eda-explorer/blob/master/load_files.py
+
 def butter_lowpass(cutoff, fs, order=5):
-    """
-    Function: Low-pass filter used to smooth signals
+    '''lowpass filter
 
-    :param:
-        cutoff
-        fs
-        order
+    Function that creates a low pass filter to be used on smoothing signals.
 
-    :return
-        b
-        a
-    """
-    # Filtering Helper functions
+    Reference: https://github.com/MITMediaLabAffectiveComputing/eda-explorer/blob/master/load_files.py
+
+    Parameters
+    ----------
+    data : pandas dataframe
+        data with physiological signals
+
+    Returns
+    -------
+    b : float
+        filter parameter
+    a : float
+        filter parameter
+    '''
     nyq = 0.5 * fs
     normal_cutoff = cutoff / nyq
     b, a = scisig.butter(order, normal_cutoff, btype='low', analog=False)
     return b, a
 
 def butter_lowpass_filter(data, cutoff, fs, order=5):
-    """
-    Function: Computes net acceleration
+    '''apply lowpass filter to data
 
-    :param:
+    Function that applies a low pass filter to smooth a signal.
 
-    :return
-    """
-    # Filtering Helper functions
+    Parameters
+    ----------
+    data : pandas dataframe
+        data with physiological signals
+    cutoff : float
+        lowpass filter smoothing parameter
+    fs : float
+        lowpass filter smoothing parameter
+    order : float
+        lowpass filter smoothing parameter
+        defualt : 5
+    Returns
+    -------
+    y : pandas dataframe or series, or numpy array
+        filtered signal
+    '''
     b, a = butter_lowpass(cutoff, fs, order=order)
-    y = scisig.lfilter(b, a, data)
-    return y
+    return scisig.lfilter(b, a, data)
 
 def get_slope(series):
     '''get slope
@@ -73,28 +88,28 @@ def get_slope(series):
     -------
     slope : float
         slope of the 1d dataset
-
     '''
-    linreg = scipy.stats.linregress(np.arange(len(series)), series )
-    slope = linreg[0]
-    return slope
+    return scipy.stats.linregress(np.arange(len(series)), series )[0]
 
 def get_window_stats(data, label=-1):
-    """
-    Function: Computes net acceleration
+    '''get window stats
 
-    :param:
+    Function that computes window stats of a given dataset (i.e., mean,
+    std, min, max, etc.).
 
-    :return
-    """
-    mean_features = np.mean(data)
-    std_features = np.std(data)
-    min_features = np.amin(data)
-    max_features = np.amax(data)
-
-    features = {'mean': mean_features, 'std': std_features, 'min': min_features, 'max': max_features,
-                'label': label}
-    return features
+    Parameters
+    ----------
+    data : pandas dataframe or series
+        the data upon which we wish to compute the window stats
+    label : int
+        label for the given window stats
+        default : -1 
+    Returns
+    -------
+    out : dict
+        dictionary containing the window statistics
+    '''
+    return {'mean': np.mean(data), 'std': np.std(data), 'min': np.amin(data), 'max': np.amax(data),'label': label}
 
 def get_absolute_integral(x):
     '''get absolute integral
@@ -110,7 +125,6 @@ def get_absolute_integral(x):
     -------
     out : float
         absolute integral of the dataset
-
     '''
     return np.sum(np.abs(x))
 
@@ -128,7 +142,6 @@ def get_dynamic_range(x):
     -------
     out : float
         dynamic range of the dataset
-
     '''
     return np.max(x) / np.min(x)
 
@@ -137,7 +150,7 @@ def get_peak_freq(x):
 
     Function that computes the peak frequency of a dataset.
 
-    Note: uses a periodogram (https://en.wikipedia.org/wiki/Periodogram)
+    Reference: https://en.wikipedia.org/wiki/Periodogram
 
     Parameters
     ----------
@@ -148,7 +161,6 @@ def get_peak_freq(x):
     -------
     peak_freq : float
         peak frequency of the dataset
-
     '''
     f, Pxx = scisig.periodogram(x, fs=8)
     psd_dict = {amp: freq for amp, freq in zip(Pxx, f)}
@@ -156,14 +168,28 @@ def get_peak_freq(x):
     return peak_freq
 
 def filterSignalFIR(eda, cutoff=0.4, numtaps=64):
-    """
-    Function: Computes net acceleration
-    https://github.com/MITMediaLabAffectiveComputing/eda-explorer/blob/master/AccelerometerFeatureExtractionScript.py
-    :param:
+    '''filter signal using finite impulse response (FIR)
 
-    :return
-    """
+    Function that filters a signal using the FIR method
+
+    Reference: https://github.com/MITMediaLabAffectiveComputing/eda-explorer/blob/master/AccelerometerFeatureExtractionScript.py
+
+    Parameters
+    ----------
+    eda : dict
+        data to filter
+    cutoff : float
+        parameter in FIR filter
+        default : 0.4
+    numtaps : float
+        parameter in FIR filter
+        default : 64
+
+    Returns
+    -------
+    peak_freq : float
+        peak frequency of the dataset
+    '''
     f = cutoff / (fs_dict['ACC'] / 2.0)
     FIR_coeff = scisig.firwin(numtaps, f)
-
     return scisig.lfilter(FIR_coeff, 1, eda)
