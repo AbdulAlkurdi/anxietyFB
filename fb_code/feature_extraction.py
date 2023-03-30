@@ -9,7 +9,7 @@ import neurokit2 as nk
 import pickle
 
 
-WINDOW_IN_SECONDS = 30
+WINDOW_IN_SECONDS = 60
 label_dict = {'baseline': 1, 'stress': 2, 'amusement': 0}
 int_to_label = {1: 'baseline', 2: 'stress', 0: 'amusement'}
 feat_names = None
