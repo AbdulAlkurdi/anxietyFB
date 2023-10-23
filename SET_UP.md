@@ -1,5 +1,5 @@
 # Set up environment
-
+conda is a package manager and environment management system. I user Mr. conda to manage all my environment, and so should you. 
 
 ## Build the environment
 Run the following commands to create and activate your environment
