@@ -11,6 +11,7 @@ from datetime import datetime
 
 
 WINDOW_IN_SECONDS = 60
+stride = 0.25
 label_dict = {'baseline': 1, 'stress': 2, 'amusement': 0}
 int_to_label = {1: 'baseline', 2: 'stress', 0: 'amusement'}
 feat_names = None
@@ -94,20 +95,20 @@ def compute_features(e4_data_dict, labels, norm_type=None):
     resp_df = pd_old.DataFrame(e4_data_dict['Resp_C'], columns=['Resp_C'])
     acc_c_df = pd_old.DataFrame(e4_data_dict['ACC_C'], columns=['ACC_x_C', 'ACC_y_C', 'ACC_z_C'])
     ecg_c_df = pd_old.DataFrame(e4_data_dict['ECG'], columns=['ECG'])
-    eda_c_df = pd_old.DataFrame(e4_data_dict['EDA_C'], columns=['EDA_C'])
-    emg_c_df = pd_old.DataFrame(e4_data_dict['EMG_C'], columns=['EMG_C'])
+    #eda_c_df = pd_old.DataFrame(e4_data_dict['EDA_C'], columns=['EDA_C'])
+    #emg_c_df = pd_old.DataFrame(e4_data_dict['EMG_C'], columns=['EMG_C'])
     resp_c_df = pd_old.DataFrame(e4_data_dict['Resp_C'], columns=['Resp_C'])
-    temp_c_df = pd_old.DataFrame(e4_data_dict['Temp_C'], columns=['Temp_C'])
+    #temp_c_df = pd_old.DataFrame(e4_data_dict['Temp_C'], columns=['Temp_C'])
 
     # Filter EDA
     eda_df['EDA'] = utils.butter_lowpass_filter(eda_df['EDA'], 1.0, utils.fs_dict['EDA'], 6)
-    eda_c_df['EDA_C'] = utils.butter_lowpass_filter(eda_c_df['EDA_C'], 1.0, utils.fs_dict['chest'], 6)
+    #eda_c_df['EDA_C'] = utils.butter_lowpass_filter(eda_c_df['EDA_C'], 1.0, utils.fs_dict['chest'], 6)
     eda_data = nk.eda_phasic(nk.standardize(eda_df['EDA']), sampling_rate=utils.fs_dict['EDA'])
     eda_df['EDA_SCR'] = eda_data['EDA_Phasic']
     eda_df['EDA_SCL'] = eda_data['EDA_Tonic']
-    eda_data_c = nk.eda_phasic(nk.standardize(eda_c_df['EDA_C']), sampling_rate=utils.fs_dict['chest'])
-    eda_c_df['EDA_SCR_C'] = eda_data_c['EDA_Phasic']
-    eda_c_df['EDA_SCL_C'] = eda_data_c['EDA_Tonic']
+    #eda_data_c = nk.eda_phasic(nk.standardize(eda_c_df['EDA_C']), sampling_rate=utils.fs_dict['chest'])
+    #eda_c_df['EDA_SCR_C'] = eda_data_c['EDA_Phasic']
+    #eda_c_df['EDA_SCL_C'] = eda_data_c['EDA_Tonic']
     
     # Filter ACM
     for _ in acc_df.columns:
@@ -124,10 +125,10 @@ def compute_features(e4_data_dict, labels, norm_type=None):
     resp_df.index = [(1 / utils.fs_dict['Resp']) * i for i in range(len(resp_df))]
     acc_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(acc_c_df))]
     ecg_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(ecg_c_df))]
-    eda_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(eda_c_df))]
-    emg_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(emg_c_df))]
+    #eda_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(eda_c_df))]
+    #emg_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(emg_c_df))]
     resp_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(resp_c_df))]
-    temp_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(temp_c_df))]
+    #temp_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(temp_c_df))]
 
     # Change indices to datetime
     eda_df.index = pd_old.to_datetime(eda_df.index, unit='s')
@@ -138,10 +139,10 @@ def compute_features(e4_data_dict, labels, norm_type=None):
     resp_df.index = pd_old.to_datetime(resp_df.index, unit='s')
     acc_c_df.index = pd_old.to_datetime(acc_c_df.index, unit='s')
     ecg_c_df.index = pd_old.to_datetime(ecg_c_df.index, unit='s')
-    eda_c_df.index = pd_old.to_datetime(eda_c_df.index, unit='s')
-    emg_c_df.index = pd_old.to_datetime(emg_c_df.index, unit='s')
+    #eda_c_df.index = pd_old.to_datetime(eda_c_df.index, unit='s')
+    #emg_c_df.index = pd_old.to_datetime(emg_c_df.index, unit='s')
     resp_c_df.index = pd_old.to_datetime(resp_c_df.index, unit='s')
-    temp_c_df.index = pd_old.to_datetime(temp_c_df.index, unit='s')
+    #temp_c_df.index = pd_old.to_datetime(temp_c_df.index, unit='s')
 
     # Getting ECG features
     ecg_df = ecg.get_ecg_data(e4_data_dict, norm_type=None)
@@ -152,11 +153,11 @@ def compute_features(e4_data_dict, labels, norm_type=None):
     df = df.join(acc_df, how='outer')
     df = df.join(label_df, how='outer')
     df = df.join(ecg_df, how='outer')
-    df = df.join(eda_c_df, how='outer')
+    #df = df.join(eda_c_df, how='outer')
     df = df.join(acc_c_df, how='outer')
-    df = df.join(emg_c_df, how='outer')
+    #df = df.join(emg_c_df, how='outer')
     df = df.join(resp_c_df, how='outer')
-    df = df.join(temp_c_df, how='outer')
+    #df = df.join(temp_c_df, how='outer')
     df['label'] = df['label'].fillna(method='bfill')
     df.reset_index(drop=True, inplace=True)
 
@@ -285,10 +286,13 @@ def make_patient_data(subject_id):
     grouped, baseline, stress, amusement = compute_features(e4_data_dict, subject.labels, norm_type)
 
     # Get windows
-    n_baseline_wdws = int(len(baseline) / (utils.fs_dict['label'] * WINDOW_IN_SECONDS))
-    n_stress_wdws = int(len(stress) / (utils.fs_dict['label'] * WINDOW_IN_SECONDS))
-    n_amusement_wdws = int(len(amusement) / (utils.fs_dict['label'] * WINDOW_IN_SECONDS))
-    
+    #n_baseline_wdws = int(len(baseline) / (utils.fs_dict['label'] * WINDOW_IN_SECONDS)) # these windows have no overlap
+    #n_stress_wdws = int(len(stress) / (utils.fs_dict['label'] * WINDOW_IN_SECONDS)) # these windows have no overlap
+    #n_amusement_wdws = int(len(amusement) / (utils.fs_dict['label'] * WINDOW_IN_SECONDS)) # these windows have no overlap
+    n_baseline_wdws = len(range(0,len(baseline) - WINDOW_IN_SECONDS*64+1,int(stride*64)))
+    n_stress_wdws = len(range(0,len(stress) - WINDOW_IN_SECONDS*64+1,int(stride*64)))
+    n_amusement_wdws = len(range(0,len(amusement) - WINDOW_IN_SECONDS*64+1,int(stride*64)))
+
     # Get samples
     baseline_samples = get_samples(baseline, n_baseline_wdws, 1)
     stress_samples = get_samples(stress, n_stress_wdws, 2)

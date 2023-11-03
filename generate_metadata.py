@@ -59,7 +59,7 @@ def create_metadata (radwear_path = '/mnt/c/Users/alkurdi/Desktop/Vansh/data/RAD
         # p4
         p4_E4_calib = '220714-232953'
         p4_hx_calib = '248835'
-
+        
         p4_E4_LA = []
         p4_hx_LA = []
         p4_E4_HA = []
@@ -294,9 +294,7 @@ def create_metadata (radwear_path = '/mnt/c/Users/alkurdi/Desktop/Vansh/data/RAD
                 'RedCap available':p18_redcap_avail,
                 'calibration':[p18_E4_calib,p18_hx_calib],
                 'LA':[p18_E4_LA,p18_hx_LA],
-                'HA':[p18_E4_HA,p18_hx_HA]} 
-        
-        
+                'HA':[p18_E4_HA,p18_hx_HA]}        
         # p20
 
         p20_E4_calib = ''

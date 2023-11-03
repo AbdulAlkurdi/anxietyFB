@@ -37,3 +37,9 @@
 **/data/RADWear/**/A0*
 
 **/data/RADWear/**/record_*
+data/RADWear/*
+archive/*
+
+__pycache__/*
+dask-worker-space/*
+
