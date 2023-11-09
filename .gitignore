@@ -43,3 +43,6 @@ archive/*
 __pycache__/*
 dask-worker-space/*
 
+# mid-processed features #
+######################
+*feats.csv

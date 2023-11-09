@@ -2,6 +2,11 @@ import heartpy as hp
 import pandas as pd_old
 import dask as pd
 import utils
+import logging
+from datetime import datetime
+now = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
+
+logging.basicConfig(filename='3rd-try-2ndthread.log', level=logging.INFO)
 
 def get_window_stats_ecg(data, label=-1, norm_type=None):
     '''extracts features from ecgs
@@ -19,7 +24,14 @@ def get_window_stats_ecg(data, label=-1, norm_type=None):
     out : dict
         Contains ECG features like BPM, HRV, etc.
     '''
-    wd, m = hp.process(data['ECG'].dropna().reset_index(drop=True), 700)
+    try:
+        wd, m = hp.process(data['ECG'].dropna().reset_index(drop=True), utils.fs_dict['ECG'])
+    except:
+        now = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
+        logging.warning(f'{now}: Feature extraction for ecg failed')
+        return {'bpm': 0, 'ibi': 0, 'sdnn': 0, 'sdsd': 0, 
+            'rmssd': 0, 'pnn20': 0, 'pnn50': 0}
+
     return {'bpm': m['bpm'], 'ibi': m['ibi'], 'sdnn': m['sdnn'], 'sdsd': m['sdsd'], 
             'rmssd': m['rmssd'], 'pnn20': m['pnn20'], 'pnn50': m['pnn50']}
 

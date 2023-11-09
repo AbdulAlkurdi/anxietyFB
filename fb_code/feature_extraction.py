@@ -8,19 +8,21 @@ import numpy as np
 import neurokit2 as nk
 import pickle
 from datetime import datetime
+import warnings
 
+# To ignore all warnings:
+warnings.filterwarnings("ignore", module="numpy")
 
 WINDOW_IN_SECONDS = 60
-stride = 0.25
+stride = 10
 label_dict = {'baseline': 1, 'stress': 2, 'amusement': 0}
 int_to_label = {1: 'baseline', 2: 'stress', 0: 'amusement'}
 feat_names = None
-savePath = 'data'
-subject_feature_path = '/WESAD/subject_feats'
+savePath = 'data/WESAD'
+subject_feature_path = '/subject_feats'
 
 # Make file paths if they don't exist
-if not os.path.exists(savePath):
-    os.makedirs(savePath)
+
 if not os.path.exists(savePath + subject_feature_path):
     os.makedirs(savePath + subject_feature_path)
 
@@ -95,21 +97,14 @@ def compute_features(e4_data_dict, labels, norm_type=None):
     resp_df = pd_old.DataFrame(e4_data_dict['Resp_C'], columns=['Resp_C'])
     acc_c_df = pd_old.DataFrame(e4_data_dict['ACC_C'], columns=['ACC_x_C', 'ACC_y_C', 'ACC_z_C'])
     ecg_c_df = pd_old.DataFrame(e4_data_dict['ECG'], columns=['ECG'])
-    #eda_c_df = pd_old.DataFrame(e4_data_dict['EDA_C'], columns=['EDA_C'])
-    #emg_c_df = pd_old.DataFrame(e4_data_dict['EMG_C'], columns=['EMG_C'])
     resp_c_df = pd_old.DataFrame(e4_data_dict['Resp_C'], columns=['Resp_C'])
-    #temp_c_df = pd_old.DataFrame(e4_data_dict['Temp_C'], columns=['Temp_C'])
 
     # Filter EDA
     eda_df['EDA'] = utils.butter_lowpass_filter(eda_df['EDA'], 1.0, utils.fs_dict['EDA'], 6)
-    #eda_c_df['EDA_C'] = utils.butter_lowpass_filter(eda_c_df['EDA_C'], 1.0, utils.fs_dict['chest'], 6)
     eda_data = nk.eda_phasic(nk.standardize(eda_df['EDA']), sampling_rate=utils.fs_dict['EDA'])
     eda_df['EDA_SCR'] = eda_data['EDA_Phasic']
     eda_df['EDA_SCL'] = eda_data['EDA_Tonic']
-    #eda_data_c = nk.eda_phasic(nk.standardize(eda_c_df['EDA_C']), sampling_rate=utils.fs_dict['chest'])
-    #eda_c_df['EDA_SCR_C'] = eda_data_c['EDA_Phasic']
-    #eda_c_df['EDA_SCL_C'] = eda_data_c['EDA_Tonic']
-    
+   
     # Filter ACM
     for _ in acc_df.columns:
         acc_df[_] = utils.filterSignalFIR(acc_df.values)
@@ -125,11 +120,8 @@ def compute_features(e4_data_dict, labels, norm_type=None):
     resp_df.index = [(1 / utils.fs_dict['Resp']) * i for i in range(len(resp_df))]
     acc_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(acc_c_df))]
     ecg_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(ecg_c_df))]
-    #eda_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(eda_c_df))]
-    #emg_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(emg_c_df))]
     resp_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(resp_c_df))]
-    #temp_c_df.index = [(1 / utils.fs_dict['chest']) * i for i in range(len(temp_c_df))]
-
+    
     # Change indices to datetime
     eda_df.index = pd_old.to_datetime(eda_df.index, unit='s')
     bvp_df.index = pd_old.to_datetime(bvp_df.index, unit='s')
@@ -139,11 +131,8 @@ def compute_features(e4_data_dict, labels, norm_type=None):
     resp_df.index = pd_old.to_datetime(resp_df.index, unit='s')
     acc_c_df.index = pd_old.to_datetime(acc_c_df.index, unit='s')
     ecg_c_df.index = pd_old.to_datetime(ecg_c_df.index, unit='s')
-    #eda_c_df.index = pd_old.to_datetime(eda_c_df.index, unit='s')
-    #emg_c_df.index = pd_old.to_datetime(emg_c_df.index, unit='s')
     resp_c_df.index = pd_old.to_datetime(resp_c_df.index, unit='s')
-    #temp_c_df.index = pd_old.to_datetime(temp_c_df.index, unit='s')
-
+    
     # Getting ECG features
     ecg_df = ecg.get_ecg_data(e4_data_dict, norm_type=None)
         
@@ -153,20 +142,18 @@ def compute_features(e4_data_dict, labels, norm_type=None):
     df = df.join(acc_df, how='outer')
     df = df.join(label_df, how='outer')
     df = df.join(ecg_df, how='outer')
-    #df = df.join(eda_c_df, how='outer')
     df = df.join(acc_c_df, how='outer')
-    #df = df.join(emg_c_df, how='outer')
     df = df.join(resp_c_df, how='outer')
-    #df = df.join(temp_c_df, how='outer')
+
     df['label'] = df['label'].fillna(method='bfill')
     df.reset_index(drop=True, inplace=True)
 
     if norm_type == 'std':
         # std norm
-        df = (df - df.mean()) / df.std()
+        df = (df - df.mean(axis=0)) / df.std()
     elif norm_type == 'minmax':
         # minmax norm
-        df = (df - df.min()) / (df.max() - df.min())
+        df = (df - df.min(axis=0)) / (df.max(axis=0) - df.min(axis=0))
 
     # Groupby
     grouped = df.groupby('label')
@@ -179,27 +166,36 @@ def compute_features(e4_data_dict, labels, norm_type=None):
 def get_samples(data, n_windows, label):
     global feat_names
     global WINDOW_IN_SECONDS
-    
+    global stride 
     samples = []
     # Using label freq (700 Hz) as our reference frequency due to it being the largest
     # and thus encompassing the lesser ones in its resolution.
     window_len = utils.fs_dict['label'] * WINDOW_IN_SECONDS
+    fs = utils.fs_dict['label']
+    #print(f'length of entire set is {len(data)/fs} seconds')
+    i = 0
+     
+    for window_start in range(0,len(data),int(utils.fs_dict['label']*stride)): 
+        
 
-    for i in range(n_windows):
+        i_start = window_start
+        i_end = window_start + window_len
+        
         # Get window of data
-        w = data[window_len * i: window_len * (i + 1)]
+        w = data[i_start: i_end].copy()
+
+        if i_end > len(data):
+            print('breaking loop')
+            break
+        else:
+            None
 
         # Add/Calc rms acc
-        w = pd_old.concat([utils.get_net_accel(w, 'wrist'), w])
-        cols = list(w.columns)
-        cols[0] = 'net_acc'
-        w.columns = cols
-        w = pd_old.concat([utils.get_net_accel(w, 'chest'), w])
-        cols = list(w.columns)
-        cols[0] = 'net_acc_C'
-        w.columns = cols
+        w['net_acc_w'] = pd_old.Series(utils.get_net_accel(w, 'wrist'))
+        w['net_acc_C'] = pd_old.Series(utils.get_net_accel(w, 'chest'))
+
+        #print(w.columns)
         
-        # Calculate stats for window
         wstats = utils.get_window_stats(data=w, label=label)
         
         # Calculate stats for window (ECG)
@@ -221,12 +217,12 @@ def get_samples(data, n_windows, label):
         wdf = pd_old.DataFrame(x.values.flatten()).T
         wdf.columns = feat_names
         wdf = pd_old.concat([wdf, pd_old.DataFrame({'label': y}, index=[0])], axis=1)
-        
+
         # Add BVP feature
         wdf['BVP_peak_freq'] = utils.get_peak_freq(w['BVP'].dropna())
         
         # Add more features here: ACC (w and c)
-        wdf['net_acc_abs_integral'] = utils.get_absolute_integral(w['net_acc'].dropna())
+        wdf['net_acc_abs_integral'] = utils.get_absolute_integral(w['net_acc_w'].dropna())
         wdf['ACC_x_abs_integral'] = utils.get_absolute_integral(w['ACC_x'].dropna())
         wdf['ACC_y_abs_integral'] = utils.get_absolute_integral(w['ACC_y'].dropna())
         wdf['ACC_z_abs_integral'] = utils.get_absolute_integral(w['ACC_z'].dropna())
@@ -247,13 +243,7 @@ def get_samples(data, n_windows, label):
         
         # EDA(w and c)
         wdf['EDA_slope'] = utils.get_slope(w['EDA'].dropna())
-        wdf['EDA_C_slope'] = None if len(w['ACC_z_C'].dropna()) == 0 else utils.get_slope(w['EDA_C'].dropna())
         wdf['EDA_drange'] = utils.get_dynamic_range(w['EDA'].dropna())
-        wdf['EDA_C_drange'] = None if len(w['EDA_C'].dropna()) == 0 else utils.get_dynamic_range(w['EDA_C'].dropna())
-
-        # EMG(c)
-        wdf['EMG_drange'] = utils.get_dynamic_range(w['EMG_C'].dropna())
-        wdf['EMG_abs_integral'] = utils.get_absolute_integral(w['EMG_C'].dropna())
 
         # RESP(c)
         if len(w['Resp_C'].dropna()) > 0:
@@ -261,21 +251,24 @@ def get_samples(data, n_windows, label):
 
         # TEMP(w and c)
         wdf['TEMP_drange'] = utils.get_dynamic_range(w['TEMP'].dropna())
-        wdf['TEMP_C_drange'] = None if len(w['Temp_C'].dropna()) == 0 else utils.get_dynamic_range(w['Temp_C'].dropna())
         wdf['TEMP_slope'] = utils.get_slope(w['TEMP'].dropna())
-        wdf['TEMP_C_slope'] = None if len(w['Temp_C'].dropna()) == 0 else utils.get_slope(w['Temp_C'].dropna())
         
         samples.append(wdf)
-
+        del w
+        progress = window_start/len(data)*100
+        i+=1
+        if i % 50 == 0:
+            print(f'processing for current participant is {progress:.1f}"%" complete. ')
+        
     return pd_old.concat(samples)
 
 def make_patient_data(subject_id):
     global savePath
     global WINDOW_IN_SECONDS
-
+    global stride
     # Make subject data object for Sx
-    subject = SubjectData(main_path='data/WESAD', subject_number=subject_id)
-
+    subject = SubjectData(main_path=savePath, subject_number=subject_id)
+    
     # Empatica E4 data - now with resp
     e4_data_dict = subject.get_wrist_and_chest_data()
     
@@ -284,22 +277,21 @@ def make_patient_data(subject_id):
 
     # The 3 classes we are classifying
     grouped, baseline, stress, amusement = compute_features(e4_data_dict, subject.labels, norm_type)
+    print('baseline: ',len(baseline),'stress: ',len(stress),'amusement: ',len(amusement))
 
     # Get windows
-    #n_baseline_wdws = int(len(baseline) / (utils.fs_dict['label'] * WINDOW_IN_SECONDS)) # these windows have no overlap
-    #n_stress_wdws = int(len(stress) / (utils.fs_dict['label'] * WINDOW_IN_SECONDS)) # these windows have no overlap
-    #n_amusement_wdws = int(len(amusement) / (utils.fs_dict['label'] * WINDOW_IN_SECONDS)) # these windows have no overlap
-    n_baseline_wdws = len(range(0,len(baseline) - WINDOW_IN_SECONDS*64+1,int(stride*64)))
-    n_stress_wdws = len(range(0,len(stress) - WINDOW_IN_SECONDS*64+1,int(stride*64)))
-    n_amusement_wdws = len(range(0,len(amusement) - WINDOW_IN_SECONDS*64+1,int(stride*64)))
+    n_baseline_wdws = len(range(0,len(baseline) - WINDOW_IN_SECONDS*utils.fs_dict['label']+1,int(stride*utils.fs_dict['label'])))
+    n_stress_wdws = len(range(0,len(stress) - WINDOW_IN_SECONDS*utils.fs_dict['label']+1,int(stride*utils.fs_dict['label'])))
+    n_amusement_wdws = len(range(0,len(amusement) - WINDOW_IN_SECONDS*utils.fs_dict['label']+1,int(stride*utils.fs_dict['label'])))
+    
 
     # Get samples
     baseline_samples = get_samples(baseline, n_baseline_wdws, 1)
     stress_samples = get_samples(stress, n_stress_wdws, 2)
     amusement_samples = get_samples(amusement, n_amusement_wdws, 0)
-
     all_samples = pd_old.concat([baseline_samples, stress_samples, amusement_samples])
     all_samples = pd_old.concat([all_samples.drop('label', axis=1), pd_old.get_dummies(all_samples['label'])], axis=1)
+    
     # Save file as csv
     all_samples.to_csv(f'{savePath}{subject_feature_path}/S{subject_id}_feats.csv')
 
@@ -321,8 +313,8 @@ def combine_files(subjects):
 
     #df.to_csv(f'{savePath}/may14_feats4.csv')
     now = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
-    df.to_csv(f'{savePath}/WESAD/subject_feats/{now}_feats.csv')
-
+    df.to_csv(f'{savePath}/subject_feats/{now}_feats.csv')
+    print('Saved file to: ',f'{savePath}/subject_feats/{now}_feats.csv')
     counts = df['label'].value_counts()
     print('Number of samples per class:')
     for label, number in zip(counts.index, counts.values):
@@ -336,6 +328,5 @@ if __name__ == '__main__':
     for patient in subject_ids:
         print(f'Processing data for S{patient}...')
         make_patient_data(patient)
-
     combine_files(subject_ids)
     print('Processing complete.')
