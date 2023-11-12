@@ -1,7 +1,7 @@
 import os
 import utils
 import respiration
-import ecg
+import ecg_fcns 
 import pandas as pd_old
 import dask as pd
 import numpy as np
@@ -9,6 +9,9 @@ import neurokit2 as nk
 import pickle
 from datetime import datetime
 import warnings
+from loggerwrapper import GLOBAL_LOGGER
+now = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
+
 
 # To ignore all warnings:
 warnings.filterwarnings("ignore", module="numpy")
@@ -134,7 +137,7 @@ def compute_features(e4_data_dict, labels, norm_type=None):
     resp_c_df.index = pd_old.to_datetime(resp_c_df.index, unit='s')
     
     # Getting ECG features
-    ecg_df = ecg.get_ecg_data(e4_data_dict, norm_type=None)
+    ecg_df = ecg_fcns.get_ecg_data(e4_data_dict, norm_type=None)
         
     # Combined dataframe
     df = eda_df.join(bvp_df, how='outer')
@@ -185,6 +188,7 @@ def get_samples(data, n_windows, label):
         w = data[i_start: i_end].copy()
 
         if i_end > len(data):
+            now = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
             print('breaking loop')
             break
         else:
@@ -199,7 +203,7 @@ def get_samples(data, n_windows, label):
         wstats = utils.get_window_stats(data=w, label=label)
         
         # Calculate stats for window (ECG)
-        wstats_ecg = ecg.get_window_stats_ecg(data=w, label=label)
+        wstats_ecg = ecg_fcns.get_window_stats_ecg(data=w, label=label)
         
         # Seperating sample and label
         x = pd_old.DataFrame(wstats).drop('label', axis=0)

@@ -2,11 +2,10 @@ import heartpy as hp
 import pandas as pd_old
 import dask as pd
 import utils
-import logging
+from loggerwrapper import GLOBAL_LOGGER
 from datetime import datetime
 now = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
 
-logging.basicConfig(filename='4th-try.log', level=logging.INFO)
 
 def get_window_stats_ecg(data, label=-1, norm_type=None):
     '''extracts features from ecgs
@@ -18,17 +17,21 @@ def get_window_stats_ecg(data, label=-1, norm_type=None):
     ----------
     data : dict
         Physiological signal dictionary
-
     Returns
     -------
     out : dict
         Contains ECG features like BPM, HRV, etc.
     '''
+    # filter ecg data above 50hz
+    filtered_ecg = hp.filter_signal(data['ECG'].dropna().reset_index(drop=True), 
+                                    50,
+                                    utils.fs_dict['ECG'], 
+                                    filtertype='lowpass')
     try:
-        wd, m = hp.process(data['ECG'].dropna().reset_index(drop=True), utils.fs_dict['ECG'])
+        wd, m = hp.process(filtered_ecg, utils.fs_dict['ECG'])
     except:
         now = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
-        logging.warning(f'{now}: Feature extraction for ecg failed')
+        GLOBAL_LOGGER.info(f'{now}: Feature extraction for ecg failed')
         return {'bpm': 0, 'ibi': 0, 'sdnn': 0, 'sdsd': 0, 
             'rmssd': 0, 'pnn20': 0, 'pnn50': 0}
 

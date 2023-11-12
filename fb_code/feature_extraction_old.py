@@ -1,7 +1,7 @@
 import os
 import utils
 import respiration
-import ecg
+import fb_code.ecg_fcns as ecg_fcns
 import pandas as pd_old
 import dask as pd
 import numpy as np
@@ -140,7 +140,7 @@ def compute_features(e4_data_dict, labels, norm_type=None):
     #temp_c_df.index = pd_old.to_datetime(temp_c_df.index, unit='s')
 
     # Getting ECG features
-    ecg_df = ecg.get_ecg_data(e4_data_dict, norm_type=None)
+    ecg_df = ecg_fcns.get_ecg_data(e4_data_dict, norm_type=None)
         
     # Combined dataframe
     df = eda_df.join(bvp_df, how='outer')
@@ -201,7 +201,7 @@ def get_samples(data, n_windows, label):
         wstats = utils.get_window_stats(data=w, label=label)
         
         # Calculate stats for window (ECG)
-        wstats_ecg = ecg.get_window_stats_ecg(data=w, label=label)
+        wstats_ecg = ecg_fcns.get_window_stats_ecg(data=w, label=label)
         
         # Seperating sample and label
         x = pd_old.DataFrame(wstats).drop('label', axis=0)

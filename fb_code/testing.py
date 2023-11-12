@@ -1,7 +1,7 @@
 import os
 import utils
 import respiration
-import ecg
+import fb_code.ecg_fcns as ecg_fcns
 import pandas as pd
 import numpy as np
 import neurokit2 as nk
