@@ -45,4 +45,4 @@ dask-worker-space/*
 
 # mid-processed features #
 ######################
-*feats.csv
+*.csv

@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 now = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
 
-logging.basicConfig(filename='3rd-try-2ndthread.log', level=logging.INFO)
+logging.basicConfig(filename='4th-try.log', level=logging.INFO)
 
 def get_window_stats_ecg(data, label=-1, norm_type=None):
     '''extracts features from ecgs

@@ -16,7 +16,7 @@ from datetime import datetime
 warnings.filterwarnings("ignore", module="numpy")
 warnings.filterwarnings("ignore", module="scipy")
 starting = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
-logging.basicConfig(filename='3rd-try-2ndthread.log', level=logging.INFO)
+logging.basicConfig(filename='4th-try.log', level=logging.INFO)
 
 WINDOW_IN_SECONDS = 60
 stride = 10
@@ -29,7 +29,7 @@ subject_feature_path = '/subject_feats'
 onedrive = '/mnt/d/Users/alkurdi/OneDrive - University of Illinois - Urbana/data/GN-WESAD'
 
 subject_ids = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17]
-snrs = [0.00001, 0.0001,  0.001, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6]
+snrs = [ 0.0001,  0.001, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6] #0.00001,
 #snrs = [0.0001, 0.001, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 0.6]
 #snrs = [0.5, 0.6]
 
@@ -295,4 +295,5 @@ if __name__ == '__main__':
             make_patient_data_wnoise(patient, snr, n_samples)
 
     #combine_noiZ_files(subject_ids) # i am running multiple snrs at the same time on separate terminals, so i will combine them later
-    print('Processing complete.')
+    now = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
+    logging.info('Processing complete.')
