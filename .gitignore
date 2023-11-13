@@ -27,7 +27,7 @@
 *.sqlite
 *.pkl
 *.parquet
-
+*.hdf5
 # WESAD respiban data #
 ######################
 **/data/WESAD/S*/S*_respiban.txt
@@ -42,6 +42,11 @@ archive/*
 
 __pycache__/*
 dask-worker-space/*
+
+# delta results data #
+######################
+
+delta_e2e_results/*
 
 # mid-processed features #
 ######################

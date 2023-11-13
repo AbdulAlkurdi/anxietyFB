@@ -179,13 +179,13 @@ def call_add_noise_windows_samples_then_combine(data_dict, subject_id, snr, n_i,
     all_samples = pd_old.concat([baseline_samples, stress_samples, amusement_samples])
     all_samples = pd_old.concat([all_samples.drop('label', axis=1), pd_old.get_dummies(all_samples['label'])], axis=1)
     #noisy_dict[n_i] = all_samples
-    all_samples.to_csv(f'{savePath}/n_{n_i}/snr_{snr}/subject_feats/S{subject_id}_feats_testparallel.csv')
+    all_samples.to_csv(f'{savePath}/n_{n_i}/snr_{snr}/subject_feats/S{subject_id}_feats.csv')
     return all_samples
 
 def make_patient_data_wnoise(subject_id, snr, n_samples): #this makes data for 1 patient, 1 snr and all samples 
-    global savePath
-    global WINDOW_IN_SECONDS
-    global stride
+    #global savePath
+    #global WINDOW_IN_SECONDS
+    #global stride
     # Make subject data object for Sx 
     subject = SubjectData(main_path=loadPath, subject_number=subject_id)
     # Empatica E4 data - now with resp
@@ -248,16 +248,16 @@ if __name__ == '__main__':
     global WINDOW_IN_SECONDS
     global stride
     global snrs_arg
-    global subject_ids_arg
-    subject_ids_arg, snrs_arg, n_samples, WINDOW_IN_SECONDS, stride  = sys.argv
+    global subject_id_arg
+    subject_id_arg, snrs_arg, n_samples, WINDOW_IN_SECONDS, stride  = sys.argv
     snrs_arg = [snrs_arg]
-    subject_ids_arg = [subject_ids_arg]
+    subject_id_arg = [subject_id_arg]
     # update snrs, subject_ids and n_samples based on what is already completed
     snrs = find_incomplete_raws(onedrive)
     now = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
     GLOBAL_LOGGER.info(f'{now}. snrs: {snrs_arg}.')
     with Pool() as pool:
-        pool.starmap(make_patient_data_wnoise, [subject_ids_arg, snrs_arg, n_samples])
+        pool.starmap(make_patient_data_wnoise, [subject_id_arg, snrs_arg, n_samples])
     #combine_noiZ_files(subject_ids) # i am running multiple snrs at the same time on separate terminals, so i will combine them later
     now = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
-    GLOBAL_LOGGER.info('Processing complete.')
+    GLOBAL_LOGGER.info(f'Processing for {n_samples} samples for snr: {snrs_arg} participant: {subject_id_arg} for is complete.')

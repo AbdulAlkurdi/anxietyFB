@@ -333,4 +333,4 @@ if __name__ == '__main__':
         print(f'Processing data for S{patient}...')
         make_patient_data(patient)
     combine_files(subject_ids)
-    print('Processing complete.')
+    GLOBAL_LOGGER.info('Processing complete.')
