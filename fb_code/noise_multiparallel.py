@@ -4,7 +4,6 @@ This version includes the following changes:
 - using global logger
 - 
 '''
-
 import numpy as np
 import os
 import pickle
@@ -37,7 +36,6 @@ snrs = [ 0.0001,  0.001, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 1, 2] #
 #snrs = [0.0001, 0.001, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.5, 0.6]
 #snrs = [0.5, 0.6]
 n_samples = 10 # Number of samples to generate for each SNR
-
 if not os.path.exists(savePath):
     os.makedirs(savePath)
 if not os.path.exists(savePath + subject_feature_path):
@@ -56,7 +54,6 @@ for n_i in range(n_samples):
                 os.makedirs(savePath + '/n_'+str(n_i)+'/snr_'+str(snr)+ '/S'+str(subject_id))
             if not os.path.exists(onedrive + '/n_'+str(n_i)+'/snr_'+str(snr)+ '/S'+str(subject_id)):
                 os.makedirs(onedrive + '/n_'+str(n_i)+'/snr_'+str(snr)+ '/S'+str(subject_id))
-
 def calculate_param(signal, noise_type, signal_to_noise_ratio):
     """
     Function: Calculates the parameters of a continuous probability density function given
@@ -72,7 +69,6 @@ def calculate_param(signal, noise_type, signal_to_noise_ratio):
     """
     if noise_type == 'Gaussian': return (signal**2).mean()/signal_to_noise_ratio
     else: return -1
-
 def gaussian_homoskedastic(signal_name, signal, signal_to_noise_ratio=None):
     """
     Constructs a homoskedastic gaussian probability density function, samples noise from it,
@@ -130,7 +126,6 @@ def gaussian_homoskedastic(signal_name, signal, signal_to_noise_ratio=None):
         # Add noise
         x_new = x + np.random.normal(mu, sigma, (len(x),))
         return (np.array(x_new).reshape(original_shape), sigma)
-
 def write_file(path, file_name, data):
     """
     Function: Writes filename to its specified path and then dumps data in .pkl format to that file.
@@ -162,7 +157,6 @@ def add_noise(data, subject_id, snr, n_i):
     with open(onedrive + '/n_'+str(n_i)+'/snr_'+str(snr)+ '/S'+str(subject_id)+'/S'+str(subject_id)+'.pkl', 'wb') as dest:
         pickle.dump(noisy_data, dest) 
     return noisy_data
-
 def call_add_noise_windows_samples_then_combine(data_dict, subject_id, snr, n_i, labels ):
     noisy_dict = add_noise(data_dict, subject_id, snr, n_i)
     # The 3 classes we are classifying
@@ -181,7 +175,6 @@ def call_add_noise_windows_samples_then_combine(data_dict, subject_id, snr, n_i,
     #noisy_dict[n_i] = all_samples
     all_samples.to_csv(f'{savePath}/n_{n_i}/snr_{snr}/subject_feats/S{subject_id}_feats.csv')
     return all_samples
-
 def make_patient_data_wnoise(subject_id, snr, n_samples): #this makes data for 1 patient, 1 snr and all samples 
     #global savePath
     #global WINDOW_IN_SECONDS
@@ -194,7 +187,6 @@ def make_patient_data_wnoise(subject_id, snr, n_samples): #this makes data for 1
     with Pool() as pool:
         # add noise
         pool.starmap(call_add_noise_windows_samples_then_combine, [(data_dict, subject_id, snr, n_i, subject.labels) for n_i in range(n_samples)])
-
 def combine_noiZ_files(subjects):
     df_list = []
     for snr in snrs:
@@ -214,7 +206,6 @@ def combine_noiZ_files(subjects):
     print('Number of samples per class:')
     for label, number in zip(counts.index, counts.values):
         print(f'{int_to_label[label]}: {number}')
-
 def find_incomplete_raws(onedrive):
     #bads are the ones that do not have the gaussian-modified data.  
     bads = []
@@ -243,7 +234,6 @@ def find_incomplete_raws(onedrive):
     GLOBAL_LOGGER.info(str(now)+ '. completed snrs : '+str(completed_snrs))
     GLOBAL_LOGGER.info(f'{now}. incomplete snrs :{bad_snrs}')
     return bad_snrs
-
 if __name__ == '__main__':
     global WINDOW_IN_SECONDS
     global stride
