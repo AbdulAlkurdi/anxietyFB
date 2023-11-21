@@ -26,10 +26,10 @@ starting = datetime.today().strftime('%Y-%m-%d--%H-%M-%p')
 label_dict = {'baseline': 1, 'stress': 2, 'amusement': 0}
 int_to_label = {1: 'baseline', 2: 'stress', 0: 'amusement'}
 feat_names = None
-loadPath = 'data/WESAD'
-savePath = 'data/GN-WESAD'
+loadPath = '/mnt/d/Users/alkurdi/data/WESAD'
+savePath = '/mnt/d/Users/alkurdi/data/GN-WESAD'
 subject_feature_path = '/subject_feats'
-onedrive = '/mnt/d/Users/alkurdi/OneDrive - University of Illinois - Urbana/data/GN-WESAD'
+onedrive = '/mnt/d/Users/alkurdi/data/GN-WESAD'
 
 subject_ids = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17]
 snrs = [ 0.0001,  0.001, 0.01, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 1, 2] #0.00001,
@@ -126,17 +126,7 @@ def gaussian_homoskedastic(signal_name, signal, signal_to_noise_ratio=None):
         # Add noise
         x_new = x + np.random.normal(mu, sigma, (len(x),))
         return (np.array(x_new).reshape(original_shape), sigma)
-def write_file(path, file_name, data):
-    """
-    Function: Writes filename to its specified path and then dumps data in .pkl format to that file.
-    :param:
-        path (string): Where you want to write (create) the file
-        file_name (string): What you want to name the file you're creating
-        data (array or ndarray or pd.DataFrame): What you want inside the file you're creating
-    """
-    filename = file_name + '.pkl'
-    with open(os.path.join(path, filename), 'wb') as dest:
-        pickle.dump(data, dest)
+
 
 def add_noise(data, subject_id, snr, n_i):
     """

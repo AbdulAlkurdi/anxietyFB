@@ -7,7 +7,7 @@
 *.o
 *.so
 
-# Packages #
+Packages #
 ############
 # it's better to unpack these files and commit the raw source
 # git has its own built in compression methods
@@ -30,7 +30,7 @@
 *.hdf5
 # WESAD respiban data #
 ######################
-**/data/WESAD/S*/S*_respiban.txt
+*respiban.txt
 
 # RADWear data #
 ######################
