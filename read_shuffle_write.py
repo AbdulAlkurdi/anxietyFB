@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 #logging.getLogger().addHandler(logging.StreamHandler())
 
 subject_ids = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17]
-snrs = [ 0.01, 0.05, 0.3]#,0.1, 0.15, 0.2,0.0001, 0.001, 0.4, 0.5, 0.6] 
+snrs = [ 0.01, 0.05, 0.3,0.1, 0.15, 0.2,0.0001, 0.001, 0.4, 0.5, 0.6] 
 n_i = [0,1,2,3,4, 5, 6,7, 8, 9] 
 done = itertools.product([0.1, 0.05,0.3], [0,1,3,4], subject_ids)#snrs , n_i, subject_ids, [factor])
 i_max = len(snrs)*len(subject_ids)*len(n_i) 
@@ -34,7 +34,7 @@ def read_shuffle_write(snr,  n_i, subject_id, factor = 5):
     factor = factor
     savePath = gn_path + sesh_path + f'/organized_S{subject_id}.pkl'
     if os.path.exists(f'{savePath}'):
-        msg = savePath+'n_i: '+ str(n_i)+ '; snr: '+ str(snr)+ '; subject_id: '+str(subject_id)+ ' already exist.'
+        msg = savePath+' n_i: '+ str(n_i)+ '; snr: '+ str(snr)+ '; subject_id: '+str(subject_id)+ ' already exist.'
         logging.info(msg)
     else:
         logging.info(f'n_i: {n_i}, snr: {snr}, subject_id: {subject_id} does not exist...but FEAR NOT!, we will create it now')    
@@ -78,17 +78,14 @@ def main():
     factor = 5 #reducing the bigger (ECG) sampling rate by a factor of 5 snr,  n_i, subject_id
     combo = itertools.product(snrs , n_i, subject_ids, [factor]) # itertools.product(list(range(n_samples)), snrs, subject_ids, factor)
     logging.debug(f'combo: {list[combo]}')
-    with tqdm(total = i_max) as pbar:
-        with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
-            futures = [executor.submit(read_shuffle_write, i[0], i[1], i[2], i[3]) for i in combo]
-            done, not_done = concurrent.futures.wait(futures, return_when='ALL_COMPLETED')
-            logging.debug(f'done assigning futures, now waiting for them to finish')
-            for future in done:
-                results = future.result()
-                pbar.update(1)
-    # we'll let each process write its own file
-    #for savePath, df in results:
-    #    pd.to_pickle(df, savePath)
+    
+    with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
+        futures = [executor.submit(read_shuffle_write, i[0], i[1], i[2], i[3]) for i in combo]
+        done, not_done = concurrent.futures.wait(futures, return_when='ALL_COMPLETED')
+        logging.debug(f'done assigning futures, now waiting for them to finish')
+        for future in done:
+            results = future.result()
+
     num_its = len(n_i)*len(snrs)*len(subject_ids)
     logging.info(f'finished {num_its} iterations in {round(time()-start_time,2)} seconds')
     logging.info(f'an average of {(time()-start_time)/num_its} seconds per iteration')

@@ -34,6 +34,24 @@ def read_hx(participant_day_filepath, date):
     br = 1.0000 * raw_br
     br.rename(columns = {0: 'breathing_rate'}, inplace = True)
 
+    # inspiration
+    insp = pd.read_csv(path+'/inspiration.csv')
+    insp['breathing_phase'] = 'insp'
+    # expiration
+    exp = pd.read_csv(path+'/expiration.csv')
+    exp['breathing_phase'] = 'exp'
+    # combine insp and exp
+    b_ph = pd.concat([insp, exp])
+    b_ph = b_ph.sort_values(by=['time [s]'],ignore_index= True)
+    combined_b_ph = pd.concat([b_ph['inspiration [NA](/api/datatype/34/)'].dropna(),
+                               b_ph['expiration [NA](/api/datatype/35/)'].dropna()]).sort_index()
+    b_ph['ins | exp'] = combined_b_ph
+    b_ph.drop(columns=['inspiration [NA](/api/datatype/34/)', 'expiration [NA](/api/datatype/35/)'], inplace=True)
+    
+    # respiration. took thoraccic because it's similar to the wesad resp location
+    resp_thor = wavfile.read(path+'/respiration_thoracic.wav') 
+    resp_thor = pd.DataFrame(data = resp_thor[1], columns = ['RESP'])
+    
     # acc x
     raw_accX = wavfile.read(path+'/acceleration_X.wav')
     raw_accX = pd.DataFrame(data = raw_accX[1])
@@ -61,7 +79,7 @@ def read_hx(participant_day_filepath, date):
     ecg['Second'] = ecg['Second'].apply(lambda x: x-ecg.index[0])
     ecg = ecg.reset_index()
     #ecg.columns = ['Heart rate', 'Second']
-
+    
     t0_br = list(date_info.values())[0]/256
     br['Timestamp'] = list(range(0, len(raw_br),1))
     br['Timestamp'] = br['Timestamp'].apply(lambda x: x/1+t0_br)
@@ -69,6 +87,22 @@ def read_hx(participant_day_filepath, date):
     br = br.set_index('Timestamp')
     br['Second'] = br['Second'].apply(lambda x: x-br.index[0])
     br = br.reset_index()
+    
+    t0_b_hp = list(date_info.values())[0]/256
+    b_ph['Timestamp'] = list(range(0, len(b_ph),1))
+    b_ph['Timestamp'] = b_ph['Timestamp'].apply(lambda x: x/64+t0_b_hp)
+    b_ph['Second'] = b_ph['Timestamp']
+    b_ph = b_ph.set_index('Timestamp')
+    b_ph['Second'] = b_ph['Second'].apply(lambda x: x-b_ph.index[0])
+    b_ph = b_ph.reset_index()
+
+    t0_resp = list(date_info.values())[0]/256
+    resp_thor['Timestamp'] = list(range(0, len(resp_thor),1))
+    resp_thor['Timestamp'] = resp_thor['Timestamp'].apply(lambda x: x/64+t0_resp)
+    resp_thor['Second'] = resp_thor['Timestamp']
+    resp_thor = resp_thor.set_index('Timestamp')
+    resp_thor['Second'] = resp_thor['Second'].apply(lambda x: x-resp_thor.index[0])
+    resp_thor = resp_thor.reset_index()
 
     t0_acc = list(date_info.values())[0]/256
     accx['Timestamp'] = list(range(0, len(raw_accX),1))
@@ -92,7 +126,7 @@ def read_hx(participant_day_filepath, date):
     accz['Second'] = accz['Second'].apply(lambda x: x-accz.index[0])
     accz = accz.reset_index()
     
-    data_dict = {'Date':date, 'ECG':ecg, 'BR':br, 'BR':br, 'accx':accx, 'accy':accy,'accz':accz}
+    data_dict = {'Date':date, 'ECG':ecg, 'BR':br, 'B_PH':b_ph,'RESP':resp_thor, 'accx':accx, 'accy':accy,'accz':accz}
     return data_dict
 
 def read_E4(participant_filepath, date):
