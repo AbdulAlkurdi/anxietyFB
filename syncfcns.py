@@ -8,8 +8,22 @@ import os
 
 def read_hx(participant_day_filepath, date):
     '''
-    takes in the participant filepath and the date of the data. it reads ecg, br, accx, accy, accz,    
-    fhex = 'record_265679'
+    Reads the participant data from the given filepath and date.
+
+    Parameters:
+    participant_day_filepath (str): The filepath of the participant data.
+    date (str): The date of the data.
+
+    Returns:
+    dict: A dictionary containing the following data:
+        - 'Date': The date of the data.
+        - 'ECG': DataFrame containing the ECG data.
+        - 'BR': DataFrame containing the breathing rate data.
+        - 'B_PH': DataFrame containing the breathing phase data.
+        - 'RESP': DataFrame containing the respiration data.
+        - 'accx': DataFrame containing the acceleration data for X-axis.
+        - 'accy': DataFrame containing the acceleration data for Y-axis.
+        - 'accz': DataFrame containing the acceleration data for Z-axis.
     '''
     # read raw ECG file; ECG_I.wav only
     # change wavefile pathway
@@ -42,7 +56,7 @@ def read_hx(participant_day_filepath, date):
     exp['breathing_phase'] = 'exp'
     # combine insp and exp
     b_ph = pd.concat([insp, exp])
-    b_ph = b_ph.sort_values(by=['time [s]'],ignore_index= True)
+    b_ph = b_ph.sort_values(by=['time [s]'])
     combined_b_ph = pd.concat([b_ph['inspiration [NA](/api/datatype/34/)'].dropna(),
                                b_ph['expiration [NA](/api/datatype/35/)'].dropna()]).sort_index()
     b_ph['ins | exp'] = combined_b_ph
@@ -131,12 +145,20 @@ def read_hx(participant_day_filepath, date):
 
 def read_E4(participant_filepath, date):
     '''
-    usage:
-        filepath=r'/home/maxinehe/Downloads/' + fE4
-        a=read_E4(filepath, '230429')
-        fE4 = 'A04BA8_230429-142458'
-        fe4 = '230429-142458'
-        
+    Read E4 data files and return a dictionary containing the data.
+
+    Parameters:
+    participant_filepath (str): The file path of the participant's data.
+    date (str): The date of the data.
+
+    Returns:
+    dict: A dictionary containing the data, including HR, EDA, TEMP, IBI, BVP, and ACC.
+
+    Usage:
+    filepath = r'/home/maxinehe/Downloads/' + fE4
+    a = read_E4(filepath, '230429')
+    fE4 = 'A04BA8_230429-142458'
+    fe4 = '230429-142458'
     '''
     filepath = participant_filepath
     # HR data -- started 10 seconds later than other metrics
@@ -219,26 +241,31 @@ def read_E4(participant_filepath, date):
     return data_dict 
 
 def E4sync_offset(a):
+    """
+    Synchronizes and offsets the EDA, temperature, BVP, and ACC data based on their timestamps.
 
+    Args:
+        a (dict): A dictionary containing the EDA, temperature, BVP, and ACC data.
+
+    Returns:
+        dict: A dictionary containing the synchronized and offset EDA, temperature, BVP, and ACC data.
+
+    """
     eda = a['EDA']
     temp = a['TEMP']
     bvp = a['BVP']
     acc = a['ACC']
 
-    
+    # Synchronization based on timestamps
     t_eda = eda['Timestamp'].iat[-1]
     t_temp = temp['Timestamp'].iat[-1]
     t_bvp = bvp['Timestamp'].iat[-1]
     t_acc = acc['Timestamp'].iat[-1]
     t0 = 0
 
-    print(t_eda < t_temp and t_eda < t_bvp and t_eda < t_acc)
-    print(t_temp < t_eda and t_temp < t_bvp and t_temp < t_acc)
-    print(t_bvp < t_eda and t_bvp < t_temp and t_bvp < t_acc)
-    print(t_acc < t_eda and t_acc < t_temp and t_acc < t_bvp)
-
+    # Offset calculation
     if t_eda < t_temp and t_eda < t_bvp and t_eda < t_acc :
-        print(1)
+        # Offset based on EDA timestamp
         t1_loc = temp.loc[temp['Timestamp'] == round(t_eda, 2)]
         t2_loc = bvp.loc[bvp['Timestamp'] == round(t_eda, 2)]
         t3_loc = acc.loc[acc['Timestamp'] == round(t_eda, 2)]
@@ -248,7 +275,7 @@ def E4sync_offset(a):
         offset_acc = acc.truncate(before = t0, after = t3_loc.index[0])
         
     elif t_temp < t_eda and t_temp < t_bvp and t_temp < t_acc :
-        print(2)
+        # Offset based on temperature timestamp
         t1_loc = eda.loc[eda['Timestamp'] == round(t_temp, 0)]
         t2_loc = bvp.loc[bvp['Timestamp'] == round(t_temp, 2)]
         t3_loc = acc.loc[acc['Timestamp'] == round(t_temp, 2)]
@@ -258,7 +285,7 @@ def E4sync_offset(a):
         offset_acc = acc.truncate(before = t0, after = t3_loc.index[0])
         
     elif t_bvp < t_eda and t_bvp < t_temp and t_bvp < t_acc :
-        print(3)
+        # Offset based on BVP timestamp
         t1_loc = eda.loc[eda['Timestamp'] == round(t_bvp, 0)]
         t2_loc = temp.loc[temp['Timestamp'] == round(t_bvp, 0)]
         t3_loc = acc.loc[acc['Timestamp'] ==round(t_bvp, 2)]
@@ -268,7 +295,7 @@ def E4sync_offset(a):
         offset_acc = acc.truncate(before = t0, after = t3_loc.index[0])
     
     elif t_acc < t_eda and t_acc < t_temp and t_acc < t_bvp :
-        print(4)
+        # Offset based on ACC timestamp
         t1_loc = eda.loc[eda['Timestamp'] == round(t_acc, 0)]
         t2_loc = temp.loc[temp['Timestamp'] == round(t_acc, 0)]
         t3_loc = bvp.loc[bvp['Timestamp'] == round(t_acc, 2)]
@@ -293,8 +320,7 @@ def E4sync_offset(a):
     Acceleration_Z1 = pd.concat([l1,Acceleration_z], axis=1, join='outer')
     Acceleration_Z = pd.concat([Acceleration_Z1,l2], axis=1, join='outer')
 
-
-
+    # Convert data to numpy arrays
     eda2 = offset_eda.iloc[:,1]
     eda2 = np.expand_dims(eda2.values, axis = 1)
     temp2 = offset_temp.iloc[:,1]
@@ -311,13 +337,11 @@ def E4sync_offset(a):
     acc2 = offset_acc.iloc[:,1:4]
     acc2 = acc2.values
 
+    # Create dictionary with synchronized and offset data
     E4_to_dic = {}
     E4_to_dic["EDA"] = offset_eda
     E4_to_dic["TEMP"] = offset_temp
     E4_to_dic["BVP"] = offset_bvp
-    #E4_to_dic["Acceleration_X"] = Accx
-    #E4_to_dic["Acceleration_Y"] = Accy
-    #E4_to_dic["Acceleration_Z"] = Accz 
     E4_to_dic["ACC"] = offset_acc
     
     if False:
@@ -326,64 +350,78 @@ def E4sync_offset(a):
 
     return E4_to_dic
 
-def Hexsync_offset(ecg,br,accx,accy, accz):
+def Hexsync_offset(ecg, br, accx, accy, accz):
+    """
+    Offset the input dataframes based on the timestamps of the ECG, BR, ACCX, ACCY, and ACCZ data.
+
+    Parameters:
+    ecg (DataFrame): DataFrame containing ECG data with a 'Timestamp' column.
+    br (DataFrame): DataFrame containing BR data with a 'Timestamp' column.
+    accx (DataFrame): DataFrame containing ACCX data with a 'Timestamp' column.
+    accy (DataFrame): DataFrame containing ACCY data with a 'Timestamp' column.
+    accz (DataFrame): DataFrame containing ACCZ data with a 'Timestamp' column.
+
+    Returns:
+    dict: A dictionary containing the offset dataframes for ECG, BR, ACCX, ACCY, ACCZ, and ACC_n.
+
+    """
     t_ecg = ecg['Timestamp'].iat[-1]
     t_br = br['Timestamp'].iat[-1]
     t_accx = accx['Timestamp'].iat[-1]
     t_accy = accy['Timestamp'].iat[-1]
     t0 = 0
-    
 
-    if t_ecg <= t_br and t_ecg <= t_accx and t_ecg<=t_accy :
-        t1_loc = br.loc[round(br['Timestamp'],0) == round(t_ecg, 0)].head(1)
-        t2_loc = accx.loc[round(accx['Timestamp'],0) == round(t_ecg, 0)].head(1)
-        t3_loc = accy.loc[round(accy['Timestamp'],0) == round(t_ecg, 0)].head(1)
+    # Offset based on the earliest timestamp
+    if t_ecg <= t_br and t_ecg <= t_accx and t_ecg <= t_accy:
+        t1_loc = br.loc[round(br['Timestamp'], 0) == round(t_ecg, 0)].head(1)
+        t2_loc = accx.loc[round(accx['Timestamp'], 0) == round(t_ecg, 0)].head(1)
+        t3_loc = accy.loc[round(accy['Timestamp'], 0) == round(t_ecg, 0)].head(1)
         offset_ecg = ecg
-        offset_br = br.truncate(before = t0, after = t1_loc.index[0])
-        offset_accx = accx.truncate(before = t0, after = t2_loc.index[0])
-        offset_accy = accy.truncate(before = t0, after = t3_loc.index[0])
-        offset_accz = accz.truncate(before = t0, after = t3_loc.index[0])
+        offset_br = br.truncate(before=t0, after=t1_loc.index[0])
+        offset_accx = accx.truncate(before=t0, after=t2_loc.index[0])
+        offset_accy = accy.truncate(before=t0, after=t3_loc.index[0])
+        offset_accz = accz.truncate(before=t0, after=t3_loc.index[0])
 
-    elif t_br <= t_ecg and t_br <= t_accx and t_br<=t_accy :
+    elif t_br <= t_ecg and t_br <= t_accx and t_br <= t_accy:
         t1_loc = ecg.loc[ecg['Timestamp'] == round(t_br, 7)]
         t2_loc = accx.loc[accx['Timestamp'] == round(t_br, 7)]
         t3_loc = accy.loc[accy['Timestamp'] == round(t_br, 7)]
-        offset_ecg = ecg.truncate(before = t0, after = t1_loc.index[0])
+        offset_ecg = ecg.truncate(before=t0, after=t1_loc.index[0])
         offset_br = br
-        offset_accx = accx.truncate(before = t0, after = t2_loc.index[0])
-        offset_accy= accy.truncate(before = t0, after = t3_loc.index[0])
-        offset_accz= accz.truncate(before = t0, after = t3_loc.index[0])
+        offset_accx = accx.truncate(before=t0, after=t2_loc.index[0])
+        offset_accy = accy.truncate(before=t0, after=t3_loc.index[0])
+        offset_accz = accz.truncate(before=t0, after=t3_loc.index[0])
 
-    elif t_accx <= t_ecg and t_accx <= t_br and t_accx <= t_accy :
+    elif t_accx <= t_ecg and t_accx <= t_br and t_accx <= t_accy:
         t1_loc = ecg.loc[ecg['Timestamp'] == round(t_accx, 7)]
         t2_loc = br.loc[br['Timestamp'] == round(t_accx, 7)]
-        t3_loc = accy.loc[accy['Timestamp'] ==round(t_accx, 7)]
-        offset_ecg = ecg.truncate(before = t0, after = t1_loc.index[0])
-        offset_br = br.truncate(before = t0, after = t2_loc.index[0])
+        t3_loc = accy.loc[accy['Timestamp'] == round(t_accx, 7)]
+        offset_ecg = ecg.truncate(before=t0, after=t1_loc.index[0])
+        offset_br = br.truncate(before=t0, after=t2_loc.index[0])
         offset_accx = accx
-        offset_accy = accy.truncate(before = t0, after = t3_loc.index[0])
-        offset_accz = accz.truncate(before = t0, after = t3_loc.index[0])
+        offset_accy = accy.truncate(before=t0, after=t3_loc.index[0])
+        offset_accz = accz.truncate(before=t0, after=t3_loc.index[0])
 
-    elif t_accy <= t_ecg and t_accy <= t_br and t_accy <= t_accx :
+    elif t_accy <= t_ecg and t_accy <= t_br and t_accy <= t_accx:
         t1_loc = ecg.loc[ecg['Timestamp'] == round(t_accy, 7)]
         t2_loc = br.loc[br['Timestamp'] == round(t_accy, 7)]
         t3_loc = accx.loc[accx['Timestamp'] == round(t_accy, 7)]
-        offset_ecg = ecg.truncate(before = t0, after = t1_loc.index[0])
-        offset_br = br.truncate(before = t0, after = t2_loc.index[0])
-        offset_accx = accx.truncate(before = t0, after = t3_loc.index[0])
+        offset_ecg = ecg.truncate(before=t0, after=t1_loc.index[0])
+        offset_br = br.truncate(before=t0, after=t2_loc.index[0])
+        offset_accx = accx.truncate(before=t0, after=t3_loc.index[0])
         offset_accy = accy
         offset_accz = accz
 
-    ecg2 = offset_ecg.iloc[:,1]
-    ecg2 = np.expand_dims(ecg2.values, axis = 1)
-    accx2 = offset_accx.iloc[:,1]
-    accx2 = np.expand_dims(accx2.values, axis = 1)
-    accy2 = offset_accy.iloc[:,1]
-    accy2 = np.expand_dims(accy2.values, axis = 1)
-    accz2 = offset_accz.iloc[:,1]
-    accz2 = np.expand_dims(accz2.values, axis = 1)
-    br2 = offset_br.iloc[:,1]
-    br2 = np.expand_dims(br2.values, axis = 1)
+    ecg2 = offset_ecg.iloc[:, 1]
+    ecg2 = np.expand_dims(ecg2.values, axis=1)
+    accx2 = offset_accx.iloc[:, 1]
+    accx2 = np.expand_dims(accx2.values, axis=1)
+    accy2 = offset_accy.iloc[:, 1]
+    accy2 = np.expand_dims(accy2.values, axis=1)
+    accz2 = offset_accz.iloc[:, 1]
+    accz2 = np.expand_dims(accz2.values, axis=1)
+    br2 = offset_br.iloc[:, 1]
+    br2 = np.expand_dims(br2.values, axis=1)
 
     hx_to_dic = {}
     hx_to_dic["ECG"] = offset_ecg
@@ -391,30 +429,35 @@ def Hexsync_offset(ecg,br,accx,accy, accz):
     hx_to_dic["ACCX"] = offset_accx
     hx_to_dic["ACCY"] = offset_accy
     hx_to_dic["ACCZ"] = offset_accz
- 
-    
-    
-    accx3 = accx.iloc[:,0:2]
-    accy3 = accy.iloc[:,1]
-    accz3 = accz.iloc[:,1:3]
-    hx_to_dic['ACC_n'] = pd.concat([accx3,
-                                    accy3,
-                                    accz3],
-                                    axis=1, join='outer')
-    #hx_to_dic['ACC_n'] = np.concatenate([accx2, accy2, accz2], axis=1, join='outer')
-    
-    
-    
+
+    accx3 = accx.iloc[:, 0:2]
+    accy3 = accy.iloc[:, 1]
+    accz3 = accz.iloc[:, 1:3]
+    hx_to_dic['ACC_n'] = pd.concat([accx3, accy3, accz3], axis=1, join='outer')
+
     if False:
-        string2 = fhex+'_hex.pkl'
+        string2 = fhex + '_hex.pkl'
         with open(string2, 'wb') as handle:
             pickle.dump(hx_to_dic, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        
-    
+
     return hx_to_dic
     
 def doublesync_offset(ecg, bvp):
-    
+    """
+    Synchronizes the given ECG and BVP data based on their timestamps.
+
+    Args:
+        ecg (DataFrame): ECG data with 'Timestamp' column.
+        bvp (DataFrame): BVP data with 'Timestamp' column.
+
+    Returns:
+        tuple: A tuple containing the offset ECG and BVP dataframes.
+
+    Raises:
+        None
+
+    """
+
     t1_ecg = ecg['Timestamp'].iat[-1]
     t1_bvp = bvp['Timestamp'].iat[-1]
     t0_bvp = bvp['Timestamp'].iat[0]
@@ -470,48 +513,53 @@ def doublesync_offset(ecg, bvp):
     return offset_ecg,offset_bvp
 
 def accsync_offset(ecg, bvp):
-    
+    """
+    Synchronizes and offsets the given ECG and BVP data based on their timestamps.
+
+    Args:
+        ecg (DataFrame): ECG data with 'Timestamp' column.
+        bvp (DataFrame): BVP data with 'Timestamp' column.
+
+    Returns:
+        dict: A dictionary containing the synchronized and offset ECG and BVP data.
+
+    Raises:
+        None
+    """
+
     t1_ecg = ecg['Timestamp'].iat[-1]
     t1_bvp = bvp['Timestamp'].iat[-1]
     t0_bvp = bvp['Timestamp'].iat[0]
     t0_ecg = ecg['Timestamp'].iat[0]
 
     if t0_ecg < t0_bvp and t1_ecg < t1_bvp:
-        
+        # Offset ECG and truncate BVP
         t0_loc = ecg.loc[round(ecg['Timestamp'],1) == round(t0_bvp, 1)].head(1)
         t1_loc = bvp.loc[round(bvp['Timestamp'],1) == round(t1_ecg, 1)].head(1)
-
         offset_bvp = bvp.truncate(after = t1_loc.index[0])
         offset_ecg = ecg.truncate(before = t0_loc.index[0])
         
     elif t0_ecg > t0_bvp and t1_ecg > t1_bvp:
-
+        # Offset BVP and truncate ECG
         t0_loc = bvp.loc[round(bvp['Timestamp'],1) == round(t0_ecg,1)].head(1)
         t1_loc = ecg.loc[round(ecg['Timestamp'],1) == round(t1_bvp,1)].head(1)
-
         offset_bvp = bvp.truncate(before = t0_loc.index[0])
         offset_ecg = ecg.truncate(after = t1_loc.index[0])
         
     elif t0_ecg < t0_bvp and t1_ecg > t1_bvp:
-        
+        # Truncate ECG
         t0_loc = ecg.loc[round(ecg['Timestamp'],1) == round(t0_bvp, 1)].head(1)
         t1_loc = ecg.loc[round(ecg['Timestamp'],1) == round(t1_bvp, 1)].head(1)
-        
         offset_bvp = bvp
         offset_ecg = ecg.truncate(before = t0_loc.index[0], after = t1_loc.index[0])
     
     elif t0_ecg > t0_bvp and t1_ecg < t1_bvp:
-        
+        # Truncate BVP
         t0_loc = bvp.loc[round(bvp['Timestamp'],1) == round(t0_ecg, 1)].head(1)
         t1_loc = bvp.loc[round(bvp['Timestamp'],1) == round(t1_ecg, 1)].head(1)
-        
         offset_bvp = bvp.truncate(before = t0_loc.index[0], after = t1_loc.index[0])
         offset_ecg = ecg
     
-        #offset = {'offset_ecg':offset_ecg, 'offset_bvp':offset_bvp}
-        #return offset
-
-
     offset_acc2 = offset_ecg
     offset_ACC2 = offset_bvp
     offset_ACC2.iloc[:,2]
@@ -546,8 +594,6 @@ def accsync_offset(ecg, bvp):
     Acceleration_Z13 = pd.concat([l5,Acceleration_z3], axis=1, join='outer')
     Acceleration_Z3 = pd.concat([Acceleration_Z13,l6], axis=1, join='outer')
 
-
-
     acc22 = offset_acc2.iloc[:,1:4]
     acc22 = acc22.values
     ACC22 = offset_ACC2.iloc[:,1:4]
@@ -568,14 +614,6 @@ def accsync_offset(ecg, bvp):
     Az = np.expand_dims(Az.values, axis = 1)
 
     E4_to_dic = {}
-    #E4_to_dic["accx_e4"] = ax
-    #E4_to_dic["accy_e4"] = ay
-    #E4_to_dic["accz_e4"] = az
-
-    #E4_to_dic["accx_hx"] = Ax
-    #E4_to_dic["accy_hx"] = Ay
-    #E4_to_dic["accz_hx"] = Az
-
     E4_to_dic["acc_e4"] = offset_bvp
     E4_to_dic["acc_hx"] = offset_acc2
 

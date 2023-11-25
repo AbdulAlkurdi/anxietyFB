@@ -20,7 +20,9 @@ snrs = [ 0.01, 0.05, 0.3,0.1, 0.15, 0.2,0.0001, 0.001, 0.4, 0.5, 0.6]
 n_i = [0,1,2,3,4, 5, 6,7, 8, 9] 
 done = itertools.product([0.1, 0.05,0.3], [0,1,3,4], subject_ids)#snrs , n_i, subject_ids, [factor])
 i_max = len(snrs)*len(subject_ids)*len(n_i) 
-
+'''
+This script reads the WESAD data, shuffles it, and writes it to a new file
+'''
 def read_shuffle_write(snr,  n_i, subject_id, factor = 5):
     sesh_id =[n_i,snr,subject_id]
     gn_path = home+'/GN-WESAD'

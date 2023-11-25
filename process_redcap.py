@@ -6,12 +6,11 @@ import pandas as pd
 import numpy as np
 import pickle
 import json
-import os.path
 
 
 def process_redcap(path, participants, force_update = False):
     '''
-    Written by A. Alkurdi and X. Fan 
+    Written by A. Alkurdi and X. Fan for RADWear and WEAR data 
     usage: process_redcap(path, participants, force_update = False) wow
     If force_update is set to True, the function will update the pickle file containing the redcap data. use when redcap data is updated. 
     returns:
@@ -158,89 +157,33 @@ def process_redcap_calibration(radwear_path = '/mnt/c/Users/alkurdi/Desktop/Vans
             print('redcap calibration dict pickle loaded')
     else: 
         print('redcap calibration dict does not exist')
-        print('BUT WORRY NOT, WE WILL CREATE IT FOR YOU')
-
-            
-                                                            
+        print('BUT WORRY NOT, WE WILL CREATE IT FOR YOU')               
         with open(radwear_path + 'all_p_metadata.json') as f:
-            all_p_metadata = json.load(f)
-                                                            
-            participant__d = {}
+            all_p_metadata = json.load(f)                                                            
             global_info_dict = {}
             all_calib_df = pd.DataFrame()
             redcap_path = radwear_path+'REDCap responses/'
-
-            #with open(radwear_path+'all_p_metadata.json', 'rb') as f:
-            #            all_p_metadata = json.load(f)
             list_of_participants = all_p_metadata['list of participant IDs']
-            for i in list_of_participants:
-                print(f' participant {i} status is {all_p_metadata[str(i)]["status"]} with e4 file {all_p_metadata[str(i)]["calibration"][1]} and hx file {all_p_metadata[str(i)]["calibration"][0]}') 
-
-            for participant in list_of_participants:
-                    
+            for participant in list_of_participants:                    
                 path = redcap_path+'Participant_' + str(participant) + '_RADWearStudy.csv'
                 with open(path, newline='') as csvfile:
                     reader = csv.DictReader(csvfile)
                     for row in reader:
                         if row['redcap_event_name'][:5] == 'basel':
                                 for key in row.keys():
-                                    #print(key[-2:])
-                                    #if key != 'subject_id' and key != 'redcap_event_name' and key != 'redcap_repeat_instrument' and row[key] != '':
-                                    #if key[-2:] == 'x2' or key[-2:] == 'y6':
                                     if '_cal' in key:
                                         global_info_dict[key] = row[key]
-                                        #print('row[key]: ', row[key])
-                daily_info_dict = {}
-                event_type = ['calm_cal_x2', 'secure_cal_x2', 'tense_cal_x2', 'regretful_cal_x2',
-                                'ease_cal_x2', 'upset_cal_x2', 'worrying_cal_x2', 'rested_cal_x2',
-                                'anxious_cal_x2', 'comfort_cal_x2', 'self_conf_cal_x2', 'nervous_cal_x2',
-                                'jittery_cal_x2', 'strun_cal_x2', 'relaxed_cal_x2', 'content_cal_x2',
-                                'worried_cal_x2', 'excited_cal_x2', 'joyful_cal_x2', 'pleasant_cal_x2',
-                                'calm_cal_y6', 'tense_cal_y6', 'upset_cal_y6', 'relax_cal_y6',
-                                'content_cal_y6', 'worried_cal_y6',
-                                'calm_cal_y6_post', 'tense_cal_y6_post', 'upset_cal_y6_post',
-                                'relax_cal_y6_post', ' content_cal_y6_post', 'worry_cal_y6_post',
-                                'calm_cal_y6_cold', 'tense_cal_y6_cold', 'upset_cal_y6_cold',
-                                'relax_cal_y6_cold', 'content_cal_y6_cold', 'worry_cal_y6_cold',
-                                'baseline_calibration_complete']
-                with open(path, newline='') as csvfile:
-                    reader = csv.DictReader(csvfile)
-                    for row in reader:
-                        if row['redcap_event_name'][:5] != 'basel':
-                            continue
-                        unique_id = row['redcap_event_name'] + '/' + row['redcap_repeat_instrument'] + '/instance' + row['redcap_repeat_instance']
-                        nested_d = {}
-                        counter = 0
-                        for key in row.keys():
-                            if (key[-9:] != 'timestamp' or row[key] == '') and counter == 0:
-                                continue
-                            if counter == len(event_type):
-                                break
-                            nested_d[event_type[counter]] = row[key]
-                            counter += 1
-                            
-                        daily_info_dict[unique_id] = nested_d
-                
-                subject_labels = []
-                subject_data = []
-                for instance in daily_info_dict.keys():
-                    key_data = []
-                    for rel_key in event_type:
-                        # Ensure that the relevant keys exist to avoid runtime error
-                        if len(daily_info_dict[instance]) > 0:
-                            key_data.append(daily_info_dict[instance][rel_key])
-                        else:
-                            break
-                    # Ensure that subject labels contain all the necessary information      
-                    if len(key_data) == len(event_type):
-                        key_data.insert(0, 12)
-                        subject_labels.append(key_data)
-                label_df = pd.DataFrame(subject_labels)
-                label_df.columns = list(global_info_dict.keys())
-                label_df['participant'] = np.ones(len(label_df))*participant
-                all_calib_df = pd.concat([all_calib_df, label_df])
-
+                participant_df = pd.read_csv(path)
+                participant_df = participant_df[participant_df['redcap_event_name'].str.contains('baseline_')]
+                participant_df = participant_df.dropna(axis=1, how='all')
+                participant_df = participant_df.dropna()
+                participant_df['subject_id'] = participant
+                participant_df['baseline_calibration_timestamp'] = pd.to_datetime(participant_df['baseline_calibration_timestamp'])
+                participant_df['baseline_calibration_unixtime'] = participant_df['baseline_calibration_timestamp'].astype(int) / 10**9
+                if participant ==12:
+                    participant_df = participant_df[participant_df['redcap_repeat_instance'] != 1]                
+                all_calib_df = pd.concat([all_calib_df, participant_df]).reset_index(drop=True)
             with open(redcap_path+'redcap_calib_dict.pkl', 'wb') as f:
                 pickle.dump(all_calib_df, f)
-            # get HADs survey, baseline calibration 
     return all_calib_df
+process_redcap_calibration()
