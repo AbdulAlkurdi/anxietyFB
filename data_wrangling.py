@@ -12,7 +12,7 @@ import neurokit2 as nk
 #import cvxEDA
 
 # E4 (wrist) Sampling Frequencies
-fs_dict = {'ACC': 32, 'BVP': 64, 'EDA': 4, 'TEMP': 4, 'label': 700, 'chest': 700}
+fs_dict = {'ACC': 32, 'BVP': 64, 'EDA': 4, 'TEMP': 4, 'label': 700, 'chest': 700} # for wesad
 WINDOW_IN_SECONDS = 30
 label_dict = {'baseline': 1, 'stress': 2, 'amusement': 0}
 int_to_label = {1: 'baseline', 2: 'stress', 0: 'amusement'}
@@ -235,9 +235,17 @@ def compute_features(data_dict, labels, norm_type=None):
 
 
 def get_samples(data, n_windows, label):
-    global feat_names
-    global WINDOW_IN_SECONDS
-
+    """
+    Extracts samples from the given data by dividing it into windows of fixed length.
+    
+    Parameters:
+    data (pd.DataFrame): The input data.
+    n_windows (int): The number of windows to extract.
+    label (str): The label associated with the samples.
+    
+    Returns:
+    pd.DataFrame: The concatenated samples.
+    """
     samples = []
     # Using label freq (700 Hz) as our reference frequency due to it being the largest
     # and thus encompassing the lesser ones in its resolution.
@@ -264,7 +272,6 @@ def get_samples(data, n_windows, label):
         cols = list(w.columns)
         cols[0] = 'net_acc_C'
         w.columns = cols
-        
         # Calculate stats for window
         wstats = get_window_stats(data=w, label=label)
 
@@ -328,9 +335,15 @@ def get_samples(data, n_windows, label):
 
 
 def make_patient_data(subject_id):
-    global savePath
-    global WINDOW_IN_SECONDS
+    """
+    Function to create patient data for a given subject ID.
 
+    Parameters:
+    subject_id (int): The ID of the subject.
+
+    Returns:
+    None
+    """
     # Make subject data object for Sx
     subject = SubjectData(main_path='data/WESAD', subject_number=subject_id)
 

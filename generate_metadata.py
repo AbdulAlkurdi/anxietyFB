@@ -670,11 +670,11 @@ def create_WEAR_metadata(
     )  # probably need to change based on where it actually is
 
     my_file = Path(
-        radwear_path + 'all_p_metadata.json'
+        wear_path + 'all_p_metadata.json'
     )  # don't know what the file is...
     if my_file.is_file() and not force_update:
         print('metadata file exists')
-        with open(radwear_path + 'all_p_metadata.json', 'rb') as f:
+        with open(wear_path + 'all_p_metadata.json', 'rb') as f:
             all_p_metadata = json.load(f)
             print('json loaded')
     else:

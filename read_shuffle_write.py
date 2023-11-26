@@ -1,3 +1,8 @@
+'''
+This function reads the WESAD data, shuffles it, and writes it to a new file.
+It is intended as a fix to the GN-WESAD data that was not created correctly following WESAD
+format. 
+'''
 import os
 from datetime import datetime
 from scipy import signal
@@ -7,7 +12,6 @@ import itertools
 import pandas as pd
 import logging
 import pickle
-from tqdm import tqdm
 now = datetime.now()
 #home= '/mnt/c/Users/alkurdi/Downloads/WESAD'
 home = 'D:/Users/alkurdi/data' #windows version
