@@ -2,9 +2,9 @@ import process_redcap
 import json
 import sys
 from pathlib import Path
+# pylint: disable=pointless-string-statement
 
-
-def create_RADWear_metadata(
+def create_radwear_metadata(
     radwear_path='/mnt/c/Users/alkurdi/Desktop/Vansh/data/RADWear/', force_update=False
 ):
     """
@@ -654,7 +654,7 @@ def create_RADWear_metadata(
         print('metadata file created')
 
 
-def create_WEAR_metadata(
+def create_wear_metadata(
     wear_path='/mnt/c/Users/alkurdi/Desktop/Vansh/data/Wear/', force_update=False
 ):  # need to change wear path probably
     """
@@ -664,14 +664,18 @@ def create_WEAR_metadata(
         wear_path (str): The path to the WEAR project directory. Default is '/mnt/c/Users/alkurdi/Desktop/Vansh/data/Wear/'.
         force_update (bool): If True, forces the update of metadata even if it already exists. Default is False.
     """
+    '''
+    NOTES:
+    [Box Health - Internal] Rad-Wear/WEAR data analysis is the file that contains the tags 
+    for the participants that mark each of the events during their in-lab sessions.
+    '''  # statement: ignore
 
+    
     redcap_path = (
         wear_path + 'REDCap responses/'
     )  # probably need to change based on where it actually is
 
-    my_file = Path(
-        wear_path + 'all_p_metadata.json'
-    )  # don't know what the file is...
+    my_file = Path(wear_path + 'all_p_metadata.json')  # don't know what the file is...
     if my_file.is_file() and not force_update:
         print('metadata file exists')
         with open(wear_path + 'all_p_metadata.json', 'rb') as f:
@@ -732,11 +736,11 @@ def create_WEAR_metadata(
         # p1
 
         # Unsure of calibration files
-        p1_E4_calib = ''  # !! need to add
+        p1_e4_calib = ''  # !! need to add
         p1_hx_calib = ''  # !! need to add
 
         p1_redcap_avail = [[], []]  # !! need to add
-        p1_E4 = [
+        p1_e4 = [
             '230404-132356',
             '230405-131309',
             '230406-141905',
@@ -767,13 +771,13 @@ def create_WEAR_metadata(
             'hxsn': '44577',
             'complete days': partcipant_days[1],
             'RedCap available': p1_redcap_avail,
-            'calibration': [p1_E4_calib, p1_hx_calib],
-            'files': [p1_E4, p1_hx],  # changed name because there isn't LA vs HA
+            'calibration': [p1_e4_calib, p1_hx_calib],
+            'files': [p1_e4, p1_hx],  # changed name because there isn't LA vs HA
         }
 
         # p5
 
-        p5_E4_calib = ''  # !! need to add
+        p5_e4_calib = ''  # !! need to add
         p5_hx_calib = ''  # !! need to add
 
         p5_E4 = ['230426-135632', '230427-152358', '230429-145211', '230502-163446']
@@ -788,16 +792,16 @@ def create_WEAR_metadata(
             'hxsn': '7234',
             'complete days': partcipant_days[5],
             'RedCap available': p5_redcap_avail,
-            'calibration': [p5_E4_calib, p5_hx_calib],
+            'calibration': [p5_e4_calib, p5_hx_calib],
             'files': [p5_E4, p5_hx],
         }
 
         # p8 - need to add E4 and hx files
 
-        p8_E4_calib = ''  # !! need to add
+        p8_e4_calib = ''  # !! need to add
         p8_hx_calib = ''  # !! need to add
 
-        p8_E4 = []  # !! need to add
+        p8_e4 = []  # !! need to add
         p8_hx = []  # !! need to add
 
         p8_redcap_avail = []  # !! need to add
@@ -808,15 +812,15 @@ def create_WEAR_metadata(
             'hxsn': '8874',
             'complete days': partcipant_days[8],
             'RedCap available': p8_redcap_avail,
-            'calibration': [p8_E4_calib, p8_hx_calib],
-            'files': [p8_E4, p8_hx],
+            'calibration': [p8_e4_calib, p8_hx_calib],
+            'files': [p8_e4, p8_hx],
         }
 
         # p9
         p9_E4_calib = ''  # !! need to add
         p9_hx_calib = ''  # !! need to add
 
-        p9_E4 = [
+        p9_e4 = [
             '230425-143228',
             '230426-165559',
             '230427-143616',
@@ -850,7 +854,7 @@ def create_WEAR_metadata(
             'complete days': partcipant_days[9],
             'RedCap available': p9_redcap_avail,
             'calibration': [p9_E4_calib, p9_hx_calib],
-            'files': [p9_E4, p9_hx],
+            'files': [p9_e4, p9_hx],
         }
 
         # p13
@@ -1222,7 +1226,7 @@ def create_WEAR_metadata(
             'fs': fs,
         }
 
-        with open(wear_path + 'all_p_metadata_wear.json', 'w') as fp:
+        with open(wear_path + 'all_p_metadata_wear.json', 'w', encoding='utf-8') as fp:
             json.dump(all_p_metadata, fp)
         print('metadata file created')
 
@@ -1230,5 +1234,5 @@ def create_WEAR_metadata(
 if __name__ == '__main__':
     # do this:
     sys.argv
-    create_RADWear_metadata()
-    create_WEAR_metadata()
+    create_radwear_metadata()
+    create_wear_metadata()
