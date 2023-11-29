@@ -204,7 +204,7 @@ def run_rf(x_train, x_test, y_train, y_test, max_depth=4, random_state=0):
     }  # rf_baseline_acc, f1 #, forest_importances
 
 
-def run_svm(x_train, x_test, y_train, y_test, c=1, random_state=0, kernel='linear'):
+def run_svm(x_train, x_test, y_train, y_test, C=1, random_state=0, kernel='linear'):
     """
     Trains a Support Vector Machine (SVM) classifier using a linear kernel
      and predicts the response for the test dataset.
@@ -230,7 +230,7 @@ def run_svm(x_train, x_test, y_train, y_test, c=1, random_state=0, kernel='linea
         - 'Classification Report': Classification report of the SVM classifier.
     """
     #starting_time = time()
-    clf = SVC(kernel=kernel, C=c, random_state=random_state)  # type: ignore
+    clf = SVC(kernel=kernel, C=C, random_state=random_state)  # type: ignore
     scaling = MinMaxScaler(feature_range=(-1, 1)).fit(x_train)
     x_train = scaling.transform(x_train)
     x_test = scaling.transform(x_test)
