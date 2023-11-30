@@ -14,16 +14,19 @@ import logging
 import pickle
 now = datetime.now()
 #home= '/mnt/c/Users/alkurdi/Downloads/WESAD'
-home = 'D:/Users/alkurdi/data' #windows version
-#home = '/mnt/d/Users/alkurdi/data/'
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', filename= f'{home}/logs/{now.strftime("%H_%M_%S")}_{os.path.basename(__file__)[0:-3]}.log' )
+# home = 'D:/Users/alkurdi/data' #windows version
+home = '/mnt/d/Users/alkurdi/data/'
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s',
+                    filename= f'{home}/logs/{now.strftime("%H_%M_%S")}_{os.path.basename(__file__)[0:-3]}.log' )
 #logging.getLogger().addHandler(logging.StreamHandler())
 
 subject_ids = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17]
 snrs = [ 0.01, 0.05, 0.3,0.1, 0.15, 0.2,0.0001, 0.001, 0.4, 0.5, 0.6] 
 n_i = [0,1,2,3,4, 5, 6,7, 8, 9] 
-done = itertools.product([0.1, 0.05,0.3], [0,1,3,4], subject_ids)#snrs , n_i, subject_ids, [factor])
+#done = itertools.product([0.1, 0.05,0.3], [0,1,3,4], subject_ids)#snrs , n_i, subject_ids, [factor])
+done = itertools.product([], [], [])#snrs , n_i, subject_ids, [factor])
 i_max = len(snrs)*len(subject_ids)*len(n_i) 
+print(list(done))
 '''
 This script reads the WESAD data, shuffles it, and writes it to a new file
 '''
@@ -59,7 +62,7 @@ def read_shuffle_write(snr,  n_i, subject_id, factor = 5):
         new_len = int(len(ws_df['signal']['chest']['ECG'])/factor)
         logging.debug(f'{sesh_id} resampling and playing with chest')
         fixed_gn_df['label'] = ws_df['label'] #signal.resample(ws_df['label'],new_len)
-        chest['ACC'] = gn_df['ACC'] #gn_df['ACC'] #= #
+        chest['ACC'] = gn_df['ACC_C'] #gn_df['ACC'] #= #
         chest['ECG'] = gn_df['ECG'] #= gn_df['ECG']
         chest['EMG'] = gn_df['EMG_C'] #= signal.resample(gn_df['EMG_C'],int(new_len/100)+1)#
         chest['EDA'] = gn_df['EDA_C']#signal.resample(gn_df['EDA_C'],int(new_len/100)+1)#
@@ -83,7 +86,7 @@ def main():
     start_time = time()
     factor = 5 #reducing the bigger (ECG) sampling rate by a factor of 5 snr,  n_i, subject_id
     combo = itertools.product(snrs , n_i, subject_ids, [factor]) # itertools.product(list(range(n_samples)), snrs, subject_ids, factor)
-    logging.debug(f'combo: {list[combo]}')
+    logging.debug(f'combo: {list(combo)}')
     
     with concurrent.futures.ProcessPoolExecutor(max_workers=6) as executor:
         futures = [executor.submit(read_shuffle_write, i[0], i[1], i[2], i[3]) for i in combo]
