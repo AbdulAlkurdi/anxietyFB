@@ -89,21 +89,18 @@ def gaussian_homoskedastic(signal_name, signal, signal_to_noise_ratio=None):
         # Noise X Axis
         x_axis = signal[:,0]
         sigma = calculate_param(x_axis, 'Gaussian', signal_to_noise_ratio)
-        s = np.random.normal(mu, sigma, 1000)
         x_axis_new = np.copy(x_axis)
         for i in range(len(x_axis_new)):
             x_axis_new[i] += float(np.random.normal(mu, sigma, 1))
         # Noise Y Axis
         y_axis = signal[:,1]
         sigma = calculate_param(y_axis, 'Gaussian', signal_to_noise_ratio)
-        s = np.random.normal(mu, sigma, 1000)
         y_axis_new = np.copy(y_axis)
         for i in range(len(y_axis_new)):
             y_axis_new[i] += float(np.random.normal(mu, sigma, 1))
         # Noise Z Axis
         z_axis = signal[:,2]
         sigma = calculate_param(z_axis, 'Gaussian', signal_to_noise_ratio)
-        s = np.random.normal(mu, sigma, 1000)
         z_axis_new = np.copy(z_axis)
         for i in range(len(z_axis_new)):
             z_axis_new[i] += float(np.random.normal(mu, sigma, 1))
