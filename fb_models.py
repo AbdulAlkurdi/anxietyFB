@@ -30,6 +30,7 @@ from sklearn.metrics import (accuracy_score, classification_report,
 from sklearn.neighbors import KNeighborsClassifier #, NeighborhoodComponentsAnalysis
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.svm import SVC
+from xgboost import XGBClassifier
 
 warnings.filterwarnings('ignore')
 
@@ -287,6 +288,47 @@ def run_ab(x_train, x_test, y_train, y_test, n_estimators=50, random_state=0):
     recall = recall_score(y_test, y_pred, average='micro')
     return {
         'Accuracy': ab_baseline_acc,
+        'Precision': precision,
+        'Recall': recall,
+        'F1 Score': f1,
+        'Confusion Matrix': cm,
+        'Classification Report': cr,
+    }
+
+def run_xgb(x_train, x_test, y_train, y_test, n_estimators=50, learning_rate=0.1, random_state=0):
+    """
+    Runs the XGBoost classifier on the given training and test data.
+
+    Parameters:
+    - x_train (array-like): Training data features.
+    - x_test (array-like): Test data features.
+    - y_train (array-like): Training data labels.
+    - y_test (array-like): Test data labels.
+    - n_estimators (int): Number of trees in the ensemble. Default is 50.
+    - learning_rate (float): Boosting learning rate. Default is 0.1.
+    - random_state (int): Random seed for reproducibility. Default is 0.
+
+    Returns:
+    - dict: A dictionary containing the following metrics:
+        - 'Accuracy': Accuracy score of the classifier.
+        - 'Precision': Precision score of the classifier.
+        - 'Recall': Recall score of the classifier.
+        - 'F1 Score': F1 score of the classifier.
+        - 'Confusion Matrix': Confusion matrix of the classifier.
+        - 'Classification Report': Classification report of the classifier.
+    """
+    clf = XGBClassifier(n_estimators=n_estimators, learning_rate=learning_rate, random_state=random_state)
+    clf = clf.fit(x_train, y_train)
+    y_pred = clf.predict(x_test)
+    cm = confusion_matrix(y_test, y_pred)
+    cr = classification_report(y_test, y_pred, digits=3)
+    xgb_acc = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred, average='micro')
+    precision = precision_score(y_test, y_pred, average='micro')
+    recall = recall_score(y_test, y_pred, average='micro')
+
+    return {
+        'Accuracy': xgb_acc,
         'Precision': precision,
         'Recall': recall,
         'F1 Score': f1,
