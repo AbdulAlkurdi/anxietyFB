@@ -9,6 +9,8 @@ from biosppy.signals import ecg
 from scipy import signal
 import pandas as pd
 import matplotlib.pyplot as plt
+rng = np.random.default_rng(seed=1001)
+
 def time_measurements(RR,x):
         # Parameters: RR: RR intervals in ms
         #        x: threshold in ms, typically: 50
@@ -94,7 +96,8 @@ def freq_ratio( ecg, fs, method='welch', factor = 1):
     N =  ecg.shape[0]                           
     L = int(2*fs)       
     alpha =10;                                
-    M = alpha + np.abs(np.random.randn(L,N))
+    #M = alpha + np.abs(np.random.randn(L,N))
+    M = alpha + np.abs(rng.random((L,N))) #seeded random gen
     M_reshaped =0
 
     for k in range(0, int(L)): 
@@ -171,8 +174,8 @@ def freq_ratio_fast(ecg, fs, method='welch', factor=1):
     N = ecg.shape[0]
     L = int( fs/2)
     alpha = 10
-    M = alpha + np.abs(np.random.randn(L, N))
-
+    # M = alpha + np.abs(np.random.randn(L, N))
+    M = alpha + np.abs(rng.random((L,N))) #seeded rng
     # Vectorization
     #for k in range(1, L):
     #    ecg_shifted_right = np.roll(ecg, -k - 1)
