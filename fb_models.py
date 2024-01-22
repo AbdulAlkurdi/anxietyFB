@@ -19,6 +19,7 @@ Note: The code contains commented-out sections that seem to be related to featur
  importance and a pipeline involving NeighborhoodComponentsAnalysis (NCA), which
  are not currently in use.
 """
+import imp
 import warnings
 
 from sklearn import tree
@@ -31,6 +32,7 @@ from sklearn.neighbors import KNeighborsClassifier #, NeighborhoodComponentsAnal
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.svm import SVC
 from xgboost import XGBClassifier
+from sklearn.inspection import permutation_importance
 
 warnings.filterwarnings('ignore')
 
@@ -68,12 +70,8 @@ def run_knn(x_train, x_test, y_train, y_test, n_neighbors=3):
     ####################
     #  Feature importance cannot be discovered for the kNN model.
     #####################
-    # y_pred = knn.predict(x_test)
-    # knn_baseline_acc = accuracy_score(y_test, y_pred)
-    # nca_pipe = Pipeline([('nca', nca), ('knn', knn)])
-    # nca_pipe.fit(x_train, y_train)
-    # knn_baseline_acc = nca_pipe.score(x_test, y_test)
-    ##print('knn baseline accuracy: ' + str(knn_baseline_acc))
+    perm_importance = permutation_importance(knn, x_train, y_train)
+
     return {
         'Accuracy': knn_baseline_acc,
         'Precision': precision,
@@ -81,6 +79,7 @@ def run_knn(x_train, x_test, y_train, y_test, n_neighbors=3):
         'F1 Score': f1,
         'Confusion Matrix': cm,
         'Classification Report': cr,
+        'FI': perm_importance,
     }
 
 
@@ -108,6 +107,9 @@ def run_dt(x_train, x_test, y_train, y_test):
     f1 = f1_score(y_test, y_pred, average='micro')
     precision = precision_score(y_test, y_pred, average='micro')
     recall = recall_score(y_test, y_pred, average='micro')
+    
+    importances = clf.feature_importances_
+        
     return {
         'Accuracy': dt_baseline_acc,
         'Precision': precision,
@@ -115,6 +117,7 @@ def run_dt(x_train, x_test, y_train, y_test):
         'F1 Score': f1,
         'Confusion Matrix': cm,
         'Classification Report': cr,
+        'FI': importances,
     }
 
 
@@ -152,6 +155,7 @@ def run_lda(x_train, x_test, y_train, y_test):
     f1 = f1_score(y_test, y_pred, average='micro')
     precision = precision_score(y_test, y_pred, average='micro')
     recall = recall_score(y_test, y_pred, average='micro')
+
     return {
         'Accuracy': lda_baseline_acc,
         'Precision': precision,
@@ -159,6 +163,7 @@ def run_lda(x_train, x_test, y_train, y_test):
         'F1 Score': f1,
         'Confusion Matrix': cm,
         'Classification Report': cr,
+        'FI': lda.coef_,
     }
 
 def run_rf(x_train, x_test, y_train, y_test, max_depth=4, random_state=0):
@@ -191,10 +196,11 @@ def run_rf(x_train, x_test, y_train, y_test, max_depth=4, random_state=0):
     f1 = f1_score(y_test, y_pred, average='micro')
     precision = precision_score(y_test, y_pred, average='micro')
     recall = recall_score(y_test, y_pred, average='micro')
-    # importances = classifier.feature_importances_
+    #print(classifier.feature_importances_)
+    importances = classifier.feature_importances_
     # features = df.columns
-    # forest_importances = pd.Series(importances, index=features).sort_values(ascending=False)
-
+    #forest_importances = pd.Series(importances, index=features).sort_values(ascending=False)
+    #print(forest_importances)
     return {
         'Accuracy': rf_baseline_acc,
         'Precision': precision,
@@ -202,6 +208,7 @@ def run_rf(x_train, x_test, y_train, y_test, max_depth=4, random_state=0):
         'F1 Score': f1,
         'Confusion Matrix': cm,
         'Classification Report': cr,
+        'FI': importances,
     }  # rf_baseline_acc, f1 #, forest_importances
 
 
@@ -243,7 +250,9 @@ def run_svm(x_train, x_test, y_train, y_test, C=1, random_state=0, kernel='linea
     f1 = f1_score(y_test, y_out, average='micro')
     precision = precision_score(y_test, y_out, average='micro')
     recall = recall_score(y_test, y_out, average='micro')
-
+    
+    perm_importance = permutation_importance(clf, x_train, y_train)
+    
     return {
         'Accuracy': svm_baseline_acc,
         'Precision': precision,
@@ -251,6 +260,7 @@ def run_svm(x_train, x_test, y_train, y_test, C=1, random_state=0, kernel='linea
         'F1 Score': f1,
         'Confusion Matrix': cm,
         'Classification Report': cr,
+        'FI': perm_importance,
     }
 
 
@@ -286,6 +296,9 @@ def run_ab(x_train, x_test, y_train, y_test, n_estimators=50, random_state=0):
     f1 = f1_score(y_test, y_pred, average='micro')
     precision = precision_score(y_test, y_pred, average='micro')
     recall = recall_score(y_test, y_pred, average='micro')
+
+    importances = clf.feature_importances_
+
     return {
         'Accuracy': ab_baseline_acc,
         'Precision': precision,
@@ -293,6 +306,7 @@ def run_ab(x_train, x_test, y_train, y_test, n_estimators=50, random_state=0):
         'F1 Score': f1,
         'Confusion Matrix': cm,
         'Classification Report': cr,
+        'FI': importances,
     }
 
 def run_xgb(x_train, x_test, y_train, y_test, n_estimators=50, learning_rate=0.1, random_state=0):
@@ -326,6 +340,7 @@ def run_xgb(x_train, x_test, y_train, y_test, n_estimators=50, learning_rate=0.1
     f1 = f1_score(y_test, y_pred, average='micro')
     precision = precision_score(y_test, y_pred, average='micro')
     recall = recall_score(y_test, y_pred, average='micro')
+    importances = clf.feature_importances_
 
     return {
         'Accuracy': xgb_acc,
@@ -334,4 +349,5 @@ def run_xgb(x_train, x_test, y_train, y_test, n_estimators=50, learning_rate=0.1
         'F1 Score': f1,
         'Confusion Matrix': cm,
         'Classification Report': cr,
+        'FI': importances,
     }

@@ -7,6 +7,9 @@ import os
 # TODO: Make this a parameter in the future
 fs_dict = {'ACC': 32, 'BVP': 64, 'EDA': 4, 'TEMP': 4, 'label': 700, 'Resp': 700, 'ECG': 700, 'chest': 700} # Frequency dictionary for WESAD data
 
+loadPath = "E:/Users/alkurdi/data/WESAD"
+loadPath_GN = "E:/Users/alkurdi/data/GN-WESAD"
+
 
 def get_net_accel(data, part):
     '''get net acceleration
@@ -231,7 +234,7 @@ def ammend_results_table(gn_wesad_acc, GN_cm_cr_dict, wesad_acc, WESAD_cm_cr_dic
     force_update = False
     for case in cases:
         if case == 'WESAD':
-            wesad_file_wanted = '/mnt/d/Users/alkurdi/data/WESAD/wesad_models_results-win60stride1_wbinaryf1.csv'
+            wesad_file_wanted = loadPath + '/wesad_models_results-win60stride1_wbinaryf1.csv'
             #if (os.path.isfile(wesad_file_wanted)) & (not force_update):
                 #logging.info('WESAD binary f1 results table found. Loading...')
                 #wesad_acc = pd.read_csv(wesad_file_wanted,index_col=0,)
@@ -262,7 +265,7 @@ def ammend_results_table(gn_wesad_acc, GN_cm_cr_dict, wesad_acc, WESAD_cm_cr_dic
             wesad_acc.to_csv(wesad_file_wanted)
             print('wesad_acc saved to: data/WESAD/wesad_models_results-win60stride1_wbinaryf1.csv')
         if case == 'GN-WESAD':
-            gn_wesad_wanted = '/mnt/d/Users/alkurdi/data/GN-WESAD/GN_wesad_models_results_wbinaryf1.csv'
+            gn_wesad_wanted = loadPath_GN + '/GN_wesad_models_results_wbinaryf1.csv'
             #if (os.path.isfile(gn_wesad_wanted) and not force_update):
                 
                 #logging.info('GN-WESAD binary f1 results table found. Loading...')
@@ -298,7 +301,8 @@ def ammend_results_table(gn_wesad_acc, GN_cm_cr_dict, wesad_acc, WESAD_cm_cr_dic
             print('gn_wesad_acc saved to: data/GN-WESAD/GN_wesad_models_results_wbinaryf1.csv')
         if case == 'PR-WESAD':
             #logging.info('Running PR-WESAD case...')
-            loadPath = '/mnt/d/Users/alkurdi/data/PR-WESAD'
+            #loadPath = '/mnt/d/Users/alkurdi/data/PR-WESAD'
+            pass
     return wesad_acc, gn_wesad_acc
 
 
