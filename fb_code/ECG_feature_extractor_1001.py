@@ -9,7 +9,9 @@ from biosppy.signals import ecg
 from scipy import signal
 import pandas as pd
 import matplotlib.pyplot as plt
-rng = np.random.default_rng(seed=1001)
+import time
+from ctypes import CDLL, POINTER
+from ctypes import c_size_t, c_double
 
 def time_measurements(RR,x):
         # Parameters: RR: RR intervals in ms
@@ -86,48 +88,48 @@ def freq_ratio( ecg, fs, method='welch', factor = 1):
     This code was made by and made available by Ahmad Algaraawi.  
     '''
     fs = int(np.round(fs/factor))
-    ## Initialization
-    # N: total No. of samples
-    # L: number of scales
-    # alpha: constant factor 
-    # M: Local Maxima Scalogram matrix (initialize with random numbers)
-    # M_reshaped: Local Maxima Scalogram matrix, reshaped to the scales of interest.
-    # k: scale (frequency resolution)
-    N =  ecg.shape[0]                           
-    L = int(2*fs)       
-    alpha =10;                                
-    #M = alpha + np.abs(np.random.randn(L,N))
-    M = alpha + np.abs(rng.random((L,N))) #seeded random gen
+    N =  ecg.shape[0]                       
+    L = int(2*fs)      
+    alpha =10;                              
+    M = alpha + np.abs(np.random.randn(L,N))
     M_reshaped =0
 
-    for k in range(0, int(L)): 
-        for i in range(k+1, N-k-1):
-            if (ecg[i]>ecg[i-k-1] and ecg[i]>ecg[i+k+1]):
-                M[k,i]=0
-    # gamma: array of shape L. 
-    #        by summing all the columns, you get a vector that contains 
-    #        the information about the scale-dependant distribution of zeros (local maxima)
-    # chosen: number of chosen scales (rows), which is index of the global minimum 
-    #         This represents the scale with the most local maxima.
+    so_file = "./peakFinder.so"
+    peakFinder = CDLL(so_file)
+
+    ND_POINTER_2 = np.ctypeslib.ndpointer(dtype=np.float64,
+                                      ndim=2,
+                                      flags="C")
+
+    ND_POINTER_1 = np.ctypeslib.ndpointer(dtype=np.float64,
+                                      ndim=1,
+                                      flags="C")
+
+
+    peakFinder.print_matrix.argtypes = [ND_POINTER_2, c_size_t, c_size_t, ND_POINTER_1 ]
+    ecg_resize = ecg[:, 0]
+    peakFinder.print_matrix(M, M.shape[0], M.shape[1], ecg_resize )
+    
     gamma = np.sum(M, axis=1)
     chosen = np.argmin(gamma)
-    # M_reshaped: Local Maxima Scalogram matrix, reshaped to the scales of interest.
-    # standard: shape N 
-    #           the standard deviation of the reshaped M matrix in the x-axis.
+
     M_reshaped = M[0:chosen,:]
+
     standard = np.std(M_reshaped, axis=0)
-    # peakLocations: ecg peaks locations in samples.
-    # peakLocations_time: ecg peaks locations in time (s)
-    # RR intervals in ms
+
     peakLocations = np.where(standard==0)[0]
+
     peakLocations_time = peakLocations/fs
-    RR = np.diff(peakLocations_time) * 1000;  
+    RR = np.diff(peakLocations_time) * 1000
+   
     time_dict = time_measurements(RR, 50)
+
     bands = {'vlf': (0, 0.04), 'lf': (0.04, 0.15), 'hf': (0.15, 0.4)}
     if method =='welch':
-        pack = freq_measurements(RR, 1.0, bands, method='welch')
+      pack = freq_measurements(RR, 1.0, bands, method='welch')
     else:
-        pack = freq_measurements(RR, 1.0, bands)
+      pack = freq_measurements(RR, 1.0, bands)
+    
     if False:
         sample = 1000
         ax =plt.figure(figsize=(8,8))
@@ -136,6 +138,9 @@ def freq_ratio( ecg, fs, method='welch', factor = 1):
         plt.ylabel('scale (k)')
         plt.xlabel('sample')
     return pack, ecg, RR, time_dict, M_reshaped, M
+        
+      
+    
 
 def analyze_ecg(series, fs, seg_len = 30):
     #freq_hybrid returns pack, ecg
@@ -174,8 +179,8 @@ def freq_ratio_fast(ecg, fs, method='welch', factor=1):
     N = ecg.shape[0]
     L = int( fs/2)
     alpha = 10
-    # M = alpha + np.abs(np.random.randn(L, N))
-    M = alpha + np.abs(rng.random((L,N))) #seeded rng
+    M = alpha + np.abs(np.random.randn(L, N))
+
     # Vectorization
     #for k in range(1, L):
     #    ecg_shifted_right = np.roll(ecg, -k - 1)
