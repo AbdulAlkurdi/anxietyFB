@@ -35,5 +35,6 @@
 # RADWear data #
 ######################
 **/data/RADWear/**/A0*
-
+**/data/RADWear
 **/data/RADWear/**/record_*
+**/data/WEAR*
